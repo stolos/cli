@@ -64,3 +64,11 @@ worker     | Some logs here
 ceryx      | Some logs here
 proxy      | Some logs here
 ```
+
+## Development
+
+In order to install this library for development, use:
+
+```bash
+pip install --editable ./
+```
