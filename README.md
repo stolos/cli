@@ -8,45 +8,92 @@ stolos COMMAND [command options]
 
 ### Available commands
 
-#### `login`
-Simple command that logs you into Stolos, using your username and password. Your access token is being stored in `~/.stolos/token`.
+#### `stolos login [OPTIONS]`
+Simple command that logs you into Stolos, using your username and password. Your access token is being stored in `~/.stolos/config.yaml`.
+
+##### Options:
+```
+--username TEXT    Your Stolos username
+--password TEXT    Your stolos password
+--stolos-url TEXT  The URL of the Stolos server to use
+--help             Show this message and exit.
+```
 
 ##### Example
 ```
-$ stolos login
-
-Enter your stolos credentials.
+$ stolos login --stolos-url=https://sourcelair.stolos.io
 Username: paris
-Password (typing will be hidden):
-
-Uploading ssh public key /Users/paris/.ssh/id_rsa.pub
-
+Password:
 Authentication successful.
 ```
 
-#### `create PROJECT`
-Creates a new Stolos project in your account. The only argument that you have to pass is the name of the project that you would like to create.
+#### `stolos projects create [OPTIONS] PROJECT_NAME`
+Create a new Stolos project.
+
+#### Options:
+```
+--stack TEXT       [Required] The Stack to use for your project
+--public-url TEXT  [Required] The public URL of your project
+--stolos-url TEXT  The URL of the Stolos server to use, if not the default
+--help             Show this message and exit.
+```
 
 ##### Example
 ```
-$ stolos create sourcelair
-
-Creating project "sourcelair"...                OK.
-
-Project "sourcelair" is ready! Run `stolos services:add sourcelair SERVICE` to add your first services and `stolos up` to launch them!
+$ stolos projects create --stack=sourcelair/stolos --public-url=example.stolos.io stolos
+Creating project "stolos"...		Ok.
+Project "stolos" is ready! Change directory with "cd stolos" and run "stolos up" to launch it!
 ```
 
-#### `init PROJECT`
-Initializes your development environment by creating all local resources needed to develop the given project.
+#### `stolos projects init [OPTIONS] PROJECT_UUID`
+Initialize an existing Stolos project.
+
+
+##### Options:
+```
+--stolos-url TEXT  The URL of the Stolos server to use, if not the default
+--help             Show this message and exit.
+```
 
 ##### Example
 ```
-$ stolos init sourcelair
+$ stolos projects init 7c3bc55d-d7d5-40d4-8765-cbc2e41b1978
+Initializing project "7c3bc55d-d7d5-40d4-8765-cbc2e41b1978"...		Ok.
+Your project is initialized! Run "stolos up" to launch it!
+```
 
-Fetching services of "sourcelair"...            OK.
-Creating local directories...                   OK.
+#### `stolos projects list [OPTIONS]`
+List your projects
 
-Run "stolos up" to start your services!
+##### Options:
+```
+--stolos-url TEXT  The URL of the Stolos server to use, if not the default
+--help             Show this message and exit.
+```
+
+##### Example:
+```
+UUID                                  Stack              Public URL
+------------------------------------  -----------------  -------------
+7c3bc55d-d7d5-40d4-8765-cbc2e41b1978  sourcelair/stolos  stage.stolos.io
+69e5f6bd-76b7-4f6e-acd2-32823716a2d8  sourcelair/stolos  example.stolos.io
+```
+
+
+#### `stolos projects delete [OPTIONS]`
+Delete a Stolos project
+
+##### Options:
+```
+--stolos-url TEXT    The URL of the Stolos server to use, if not the default
+--project-uuid TEXT  The UUID of the project to delete, defaults current one
+--help               Show this message and exit.
+```
+
+##### Example
+```
+$ stolos projects delete
+Deleting project "69e5f6bd-76b7-4f6e-acd2-32823716a2d8"...		Ok.
 ```
 
 #### `up`

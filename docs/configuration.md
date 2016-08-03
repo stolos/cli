@@ -3,7 +3,8 @@
 `stolosctl` has two layers of configuration files which are merged before running each command:
 
 * `$PWD/.stolos/config.yaml` - used for project specific configuration options, like the project ID and the server it belongs
-* `~/.stolos/config.yaml` - used for user specific configuration options, like the user token
+* `[OS Specific Application directory]/config.yaml` - used for user specific configuration options, like the user token
+  * this is using [Click's application specific directories](http://click.pocoo.org/5/utils/#finding-application-folders)
 
 Also, the following files exist inside the project directory
 
@@ -18,10 +19,13 @@ When the CLI is triggered, the user specific options are initialized, they're me
 
 ### `user`
 
-User specific options
+User specific options, under partitioned under a key identifying each API host
 
-* `user.username` - the username of the current user
-* `user.token` - the authentication token of the current user
+* `user.[stolos-server-host].username` - the username of this API server user
+* `user.[stolos-server-host].token` - the authentication token of this API server user
+* `user.[stolos-server-host].host` - the host of the Stolos API server, including the protocol scheme
+
+### `default-server` - the default API server to use, if not provided
 
 ### `project`
 
@@ -50,10 +54,13 @@ server:
   host: 52.59.88.19
 ```
 
-### `~/.stolos/config.yaml`
+### `[OS Specific Application directory]/config.yaml`
 
 ```yaml
 user:
-  username: akalipetis
-  token: 07a0471964099d146579be5d2368b2dd613bda57
+  sourcelair.stolos.io:
+    host: https://sourcelair.stolos.io
+    username: akalipetis
+    token: 07a0471964099d146579be5d2368b2dd613bda57
+default-api-server: sourcelair.stolos.io
 ```
