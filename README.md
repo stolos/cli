@@ -72,3 +72,7 @@ In order to install this library for development, use:
 ```bash
 pip install --editable ./
 ```
+
+## Documentation
+
+* [Configuration overview](docs/configuration.md)
