@@ -18,8 +18,8 @@ def cli():
 
 @cli.command(help='Log in to a Stolos environment')
 @click.option('--username', prompt=True, help='Your Stolos username')
-@click.option('--password', prompt=True, hide_input=True,
-              help='Your stolos password')
+@click.option('--password', prompt='Password (typing will be hidden)',
+              hide_input=True, help='Your stolos password')
 @click.option('--stolos-url', default='https://api.stolos.io',
               help='The URL of the Stolos server to use')
 def login(**kwargs):
@@ -112,20 +112,19 @@ def init(**kwargs):
 @projects.command(help='Delete a Stolos project')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
-@click.option('--project-uuid',
-              help='The UUID of the project to delete, defaults current one')
+@click.argument('project-uuid', required=False)
 def delete(**kwargs):
-    cnf = config.get_config()
-    stolos_url = kwargs.pop('stolos_url')
     project_uuid = kwargs.pop('project_uuid')
+    if not project_uuid and not _ensure_stolos_directory(raise_err=False):
+        raise exceptions.CLIRequiredException('project-uuid')
+    stolos_url = kwargs.pop('stolos_url')
     remove_directory = False
     if not project_uuid:
+        cnf = config.get_config()
         project_uuid = cnf['project']['uuid']
         remove_directory = True
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
-    if not project_uuid:
-        raise exceptions.CLIRequiredException('project-uuid')
     click.echo('Deleting project "{}"...'.format(project_uuid), nl=False)
     api.projects_remove(cnf['user'][stolos_url], project_uuid)
     click.echo('\t\tOk.')
@@ -173,3 +172,13 @@ def _deinitialize_project():
     """
     if os.path.isdir('.stolos'):
         shutil.rmtree('.stolos', ignore_errors=True)
+
+
+def _ensure_stolos_directory(raise_err=True):
+    """
+    Ensures the existance of a Stolos directory. Either raises an exception, or
+    returns the result.
+    """
+    if not os.path.isdir('.stolos') and raise_err:
+        raise exceptions.NotStolosDirectoryException()
+    return os.path.isdir('.stolos')

@@ -23,7 +23,7 @@ Simple command that logs you into Stolos, using your username and password. Your
 ```
 $ stolos login --stolos-url=https://sourcelair.stolos.io
 Username: paris
-Password:
+Password (typing will be hidden):
 Authentication successful.
 ```
 
@@ -80,13 +80,12 @@ UUID                                  Stack              Public URL
 ```
 
 
-#### `stolos projects delete [OPTIONS]`
+#### `stolos projects delete [OPTIONS] [PROJECT_UUID]`
 Delete a Stolos project
 
 ##### Options:
 ```
 --stolos-url TEXT    The URL of the Stolos server to use, if not the default
---project-uuid TEXT  The UUID of the project to delete, defaults current one
 --help               Show this message and exit.
 ```
 

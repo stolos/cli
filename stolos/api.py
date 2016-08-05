@@ -65,6 +65,6 @@ def projects_remove(credentials, project_uuid):
     resp = requests.delete(url, headers=headers)
     try:
         resp.raise_for_status()
-    except request.exceptions.HTTPError as err:
+    except requests.exceptions.HTTPError as err:
         if not resp.status_code == 404:
             raise
