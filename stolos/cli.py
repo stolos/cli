@@ -2,8 +2,12 @@ import os
 import os.path
 import random
 import shutil
+import signal
 import stat
 import string
+import subprocess
+import sys
+import time
 from urlparse import urlparse
 
 import click
@@ -43,6 +47,49 @@ def login(**kwargs):
     click.echo('Authentication successful.')
 
 
+@cli.command()
+def up():
+    cnf = config.get_config()
+    _config_environ(cnf)
+    click.echo('Syncing...')
+    if _sync(cnf, False).wait() != 0:
+        click.echo('There was an error with the sync')
+        return
+    click.echo('Okay.')
+    processes = [('Syncing', _sync(cnf, True)),
+                 ('Services', _compose(['up']))]
+    exit = False
+    while not exit:
+        for process_name, process in processes:
+            if process.poll():
+                exit = '{} exited with exit code "{}"'.format(
+                    process_name, process.returncode)
+                processes.remove((process_name, process))
+        time.sleep(1)
+    for _, p in processes:
+        p.wait()
+    click.echo(exit)
+
+
+@cli.command(context_settings=dict(
+    ignore_unknown_options=True,
+    allow_extra_args=True,
+))
+@click.pass_context
+def compose(ctx):
+    cnf = config.get_config()
+    _config_environ(cnf)
+    _compose(ctx.args).wait()
+
+
+@cli.command()
+@click.option('--repeat/--oneoff', default=True,
+              help='If the sync should run continuously, defaults to true')
+def sync(repeat):
+    cnf = config.get_config()
+    _sync(cnf, repeat).wait()
+
+
 @cli.group(help='Manage your Stolos projects')
 def projects():
     pass
@@ -70,14 +117,11 @@ def list(**kwargs):
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('stack')
-@click.argument('project_name')
+@click.argument('project_directory')
 def create(**kwargs):
     cnf = config.get_config()
     stolos_url = kwargs.pop('stolos_url')
-    project_name = kwargs.pop('project_name')
-    if os.path.exists(project_name):
-        raise click.ClickException(
-            'Directory "{}" already exists'.format(project_name))
+    project_directory = kwargs.pop('project_directory')
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
     if not kwargs['public_url']:
@@ -92,15 +136,16 @@ def create(**kwargs):
         )
         click.echo(
             'Assigning random public URL "{}"'.format(kwargs['public_url']))
-    click.echo('Creating project "{}"...'.format(project_name), nl=False)
+    click.echo('Creating project "{}"...'.format(project_directory), nl=False)
     project = api.projects_create(cnf['user'][stolos_url], **kwargs)
-    os.makedirs(project_name)
-    os.chdir(project_name)
+    if not os.path.exists(project_directory):
+        os.makedirs(project_directory)
+    os.chdir(project_directory)
     _initialize_project(stolos_url, project)
     click.echo('\t\tOk.')
     click.echo(
         ('Your project is ready! Change directory with "cd {0}" and run '
-         '"stolos up" to launch it!').format(project_name))
+         '"stolos up" to launch it!').format(project_directory))
 
 
 @projects.command(
@@ -126,13 +171,13 @@ def connect(**kwargs):
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('project-uuid', required=False)
 def delete(**kwargs):
+    cnf = config.get_config()
     project_uuid = kwargs.pop('project_uuid')
     if not project_uuid and not _ensure_stolos_directory(raise_err=False):
         raise exceptions.CLIRequiredException('project-uuid')
     stolos_url = kwargs.pop('stolos_url')
     remove_directory = False
     if not project_uuid:
-        cnf = config.get_config()
         project_uuid = cnf['project']['uuid']
         remove_directory = True
     if not stolos_url:
@@ -184,6 +229,54 @@ def _deinitialize_project():
     """
     if os.path.isdir('.stolos'):
         shutil.rmtree('.stolos', ignore_errors=True)
+
+
+def _config_environ(cnf):
+    """
+    Configures the environment with any needed environment variables for compose
+    and Unison.
+    """
+    os.environ.update({
+        'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
+        'COMPOSE_FILE': 'docker-compose.yaml',
+        'DOCKER_HOST': 'tcp://{}:2376'.format(cnf['server']['host']),
+        'DOCKER_CERT_PATH': '{}/.stolos'.format(os.getcwd()),
+        'DOCKER_TLS_VERIFY': '1',
+        'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
+    })
+
+
+def _compose(args):
+    p = subprocess.Popen(
+        ['docker-compose'] + args,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        stdin=sys.stdin)
+    signal.signal(signal.SIGINT, _interrupt_handler)
+    return p
+
+
+def _interrupt_handler(*args, **kwargs):
+    pass
+
+
+def _sync(cnf, repeat):
+    args = ['-silent',
+            '-sshargs',
+            '-i {}/.stolos/id_rsa'.format(os.getcwd()),
+            os.getcwd(),
+            'ssh://stolos@{0}//mnt/stolos/{1}'.format(
+                cnf['server']['host'], cnf['project']['uuid']),
+           ]
+    if repeat:
+        args.insert(0, '2')
+        args.insert(0, '-repeat')
+    p = subprocess.Popen(
+        ['unison'] + args,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        stdin=sys.stdin)
+    return p
 
 
 def _ensure_stolos_directory(raise_err=True):
