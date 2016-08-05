@@ -225,6 +225,49 @@ def _initialize_project(stolos_url, project):
         os.chmod('.stolos/id_rsa', 0600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
+    with open('.stolos/default.prf') as default_profile:
+        default_profile.write(
+            """
+# Default unison profile for UNIX systems
+include common
+"""
+        )
+    with open('.stolos/win.prf') as windows_profile:
+        windows_profile.write(
+            """
+# Unison profile for Windows systems
+perms = 0
+
+include common
+"""
+    with open('.stolos/common', 'w+') as common:
+        common.write(
+            string.Template(
+                """
+# Roots of the synchronization
+root = ../
+root = ssh://stolos@${STOLOS_SERVER}//mnt/stolos/${STOLOS_PROJECT_ID}
+
+# This assumes that the unison command will run inside the project's root
+sshargs = -i .stolos/id_rsa
+
+ui = text
+addversionno = true
+repeat = 2
+prefer = newer
+fastcheck = true
+ignore = Path .stolos
+silent = true
+
+# Set this to 'all' or 'verbose' for debugging
+debug = false
+
+"""
+            ).substitute(
+                STOLOS_PROJECT_ID=project['uuid'],
+                STOLOS_SERVER=project['server']['host']
+            )
+        )
 
 
 def _deinitialize_project():
