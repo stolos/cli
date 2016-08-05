@@ -246,7 +246,7 @@ include common
             string.Template(
                 """
 # Roots of the synchronization
-root = ../
+root = .
 root = ssh://stolos@${STOLOS_SERVER}//mnt/stolos/${STOLOS_PROJECT_ID}
 
 # This assumes that the unison command will run inside the project's root
