@@ -27,20 +27,18 @@ Password (typing will be hidden):
 Authentication successful.
 ```
 
-#### `stolos projects create [OPTIONS] PROJECT_NAME`
-Create a new Stolos project.
-
-#### Options:
+#### `stolos projects create [OPTIONS] STACK PROJECT_NAME` Create a new Stolos project
 ```
---stack TEXT       [Required] The Stack to use for your project
---public-url TEXT  [Required] The public URL of your project
---stolos-url TEXT  The URL of the Stolos server to use, if not the default
---help             Show this message and exit.
+Options:
+  --public-url TEXT  The public URL of your project, defaults to random hex
+  --stolos-url TEXT  The URL of the Stolos server to use, if not the default
+  --help             Show this message and exit.
 ```
 
 ##### Example
 ```
-$ stolos projects create --stack=sourcelair/stolos --public-url=example.stolos.io stolos
+$ stolos projects create sourcelair/stolos stolos
+Assigning random public URL "sourcelair-stolos-akalipetis-czimkp.akalipetis.sourcelair.stolos.io"
 Creating project "stolos"...		Ok.
 Project "stolos" is ready! Change directory with "cd stolos" and run "stolos up" to launch it!
 ```

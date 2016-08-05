@@ -1,11 +1,12 @@
 import os
 import os.path
+import random
 import shutil
 import stat
+import string
 from urlparse import urlparse
 
 import click
-
 from tabulate import tabulate
 
 from stolos import api, config, exceptions
@@ -64,10 +65,11 @@ def list(**kwargs):
 
 
 @projects.command(help='Create a new Stolos project')
-@click.option('--stack', help='[Required] The Stack to use for your project')
-@click.option('--public-url', help='[Required] The public URL of your project')
+@click.option('--public-url',
+              help='The public URL of your project, defaults to random hex')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
+@click.argument('stack')
 @click.argument('project_name')
 def create(**kwargs):
     cnf = config.get_config()
@@ -78,9 +80,18 @@ def create(**kwargs):
             'Directory "{}" already exists'.format(project_name))
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
-    for option in ['public_url', 'stack']:
-        if not kwargs[option]:
-            raise exceptions.CLIRequiredException(option)
+    if not kwargs['public_url']:
+        company, stack_name = kwargs['stack'].split('/')
+        fmt_str = '{company}-{stack_name}-{username}-{hex}.{server}'
+        kwargs['public_url'] = fmt_str.format(
+            company=company, stack_name=stack_name,
+            username=cnf['user'][stolos_url]['username'],
+            hex=''.join(
+                [random.choice(string.ascii_lowercase) for _ in range(6)]),
+            server=stolos_url,
+        )
+        click.echo(
+            'Assigning random public URL "{}"'.format(kwargs['public_url']))
     click.echo('Creating project "{}"...'.format(project_name), nl=False)
     project = api.projects_create(cnf['user'][stolos_url], **kwargs)
     os.makedirs(project_name)
