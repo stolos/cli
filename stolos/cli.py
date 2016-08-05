@@ -225,14 +225,14 @@ def _initialize_project(stolos_url, project):
         os.chmod('.stolos/id_rsa', 0600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
-    with open('.stolos/default.prf') as default_profile:
+    with open('.stolos/default.prf', 'w+') as default_profile:
         default_profile.write(
             """
 # Default unison profile for UNIX systems
 include common
 """
         )
-    with open('.stolos/win.prf') as windows_profile:
+    with open('.stolos/win.prf', 'w+') as windows_profile:
         windows_profile.write(
             """
 # Unison profile for Windows systems
@@ -240,6 +240,7 @@ perms = 0
 
 include common
 """
+        )
     with open('.stolos/common', 'w+') as common:
         common.write(
             string.Template(
