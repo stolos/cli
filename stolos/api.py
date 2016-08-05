@@ -1,5 +1,5 @@
 """
-Authentication logic for the Stolos CLI.
+API client for use in the Stolos CLI.
 """
 import os.path
 
@@ -11,7 +11,7 @@ from stolos import exceptions
 
 def authenticate(stolos_url, username, password):
     """
-    Authenticates the user to the given Stolos server, using the given
+    Authenticate the user to the given Stolos server, using the given
     credentials. Returns the authentication token.
     """
     url = os.path.join(stolos_url, 'api/a0.1/auth/login/')
@@ -28,6 +28,9 @@ def authenticate(stolos_url, username, password):
 
 
 def projects_list(credentials):
+    """
+    List the projects of the currently logged in user.
+    """
     url = os.path.join(credentials['host'], 'api/a0.1/projects/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
@@ -36,6 +39,9 @@ def projects_list(credentials):
 
 
 def projects_create(credentials, stack, public_url):
+    """
+    Create a new project, using the given stack and public URL.
+    """
     url = os.path.join(credentials['host'], 'api/a0.1/projects/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.post(url, headers=headers, json={
@@ -52,6 +58,9 @@ def projects_create(credentials, stack, public_url):
 
 
 def projects_retrieve(credentials, project_uuid):
+    """
+    Retrieve the project with the given UUID.
+    """
     url = os.path.join(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
@@ -60,6 +69,9 @@ def projects_retrieve(credentials, project_uuid):
 
 
 def projects_remove(credentials, project_uuid):
+    """
+    Remove the proejct with the given UUID.
+    """
     url = os.path.join(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.delete(url, headers=headers)

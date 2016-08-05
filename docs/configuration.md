@@ -3,7 +3,7 @@
 `stolosctl` has two layers of configuration files which are merged before running each command:
 
 * `$PWD/.stolos/config.yaml` - used for project specific configuration options, like the project ID and the server it belongs
-* `[OS Specific Application directory]/config.yaml` - used for user specific configuration options, like the user token
+* `[OS Specific Application directory]/Stolos/config.yaml` - used for user specific configuration options, like the user token
   * this is using [Click's application specific directories](http://click.pocoo.org/5/utils/#finding-application-folders)
 
 Also, the following files exist inside the project directory
@@ -54,7 +54,7 @@ server:
   host: 52.59.88.19
 ```
 
-### `[OS Specific Application directory]/config.yaml`
+### `[OS Specific Application directory]/Stolos/config.yaml`
 
 ```yaml
 user:
