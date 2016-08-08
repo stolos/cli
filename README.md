@@ -27,9 +27,11 @@ Password (typing will be hidden):
 Authentication successful.
 ```
 
-#### `stolos projects create [OPTIONS] STACK PROJECT_DIRECTORY` Create a new Stolos project
+#### `stolos projects create [OPTIONS] STACK PROJECT_DIRECTORY`
+Create a new Stolos project
+
+##### Options:
 ```
-Options:
   --public-url TEXT  The public URL of your project, defaults to random hex
   --stolos-url TEXT  The URL of the Stolos server to use, if not the default
   --help             Show this message and exit.
