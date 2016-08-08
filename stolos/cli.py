@@ -309,18 +309,20 @@ def _interrupt_handler(*args, **kwargs):
 
 
 def _sync(cnf, repeat):
-    args = ['-silent',
-            '-sshargs',
-            '-i {}/.stolos/id_rsa'.format(os.getcwd()),
-            os.getcwd(),
-            'ssh://stolos@{0}//mnt/stolos/{1}'.format(
-                cnf['server']['host'], cnf['project']['uuid']),
-           ]
+    args = []
     if repeat:
         args.insert(0, '2')
         args.insert(0, '-repeat')
+    else:
+        args.insert(0, 'false')
+        args.insert(0, '-fastcheck')
+    if _is_windows():
+        args.insert(0, 'win')
+    env = os.environ.copy()
+    env["UNISON"] = ".stolos"
     p = subprocess.Popen(
         ['unison'] + args,
+        env=env,
         stdout=sys.stdout,
         stderr=sys.stderr,
         stdin=sys.stdin)
@@ -346,3 +348,10 @@ def _ensure_stolos_directory(base_directory=None, raise_exc=True):
             raise exceptions.NotStolosDirectoryException()
         return False
     return _ensure_stolos_directory(parent, raise_exc)
+
+
+def _is_windows():
+    return {
+        'win32': True,
+        'cygwin': True
+    }.get(sys.platform, False)
