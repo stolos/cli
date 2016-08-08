@@ -294,11 +294,11 @@ def _ensure_stolos_directory(base_directory=None, raise_exc=True):
     if base_directory is None:
         base_directory = os.getcwd()
     parent = os.path.abspath(os.path.join(base_directory, os.pardir))
+    if os.path.exists(os.path.join(base_directory, '.stolos')):
+        os.chdir(base_directory)
+        return True
     if parent == base_directory:
         if raise_exc:
             raise exceptions.NotStolosDirectoryException()
         return False
-    if os.path.exists(os.path.join(base_directory, '.stolos')):
-        os.chdir(base_directory)
-        return True
     return _ensure_stolos_directory(parent, raise_exc)
