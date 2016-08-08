@@ -244,7 +244,7 @@ def _config_environ(cnf):
         'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
         'COMPOSE_FILE': 'docker-compose.yaml',
         'DOCKER_HOST': 'tcp://{}:2376'.format(cnf['server']['host']),
-        'DOCKER_CERT_PATH': '{}/.stolos'.format(os.getcwd()),
+        'DOCKER_CERT_PATH': '.stolos',
         'DOCKER_TLS_VERIFY': '1',
         'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
     })
