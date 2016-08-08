@@ -99,25 +99,26 @@ def create(**kwargs):
     _initialize_project(stolos_url, project)
     click.echo('\t\tOk.')
     click.echo(
-        ('Project "{0}" is ready! Change directory with "cd {0}" and run '
+        ('Your project is ready! Change directory with "cd {0}" and run '
          '"stolos up" to launch it!').format(project_name))
 
 
-@projects.command(help='Initialize an existing Stolos project')
+@projects.command(
+    help='Connect the current directory to an existing Stolos project')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('project_uuid')
-def init(**kwargs):
+def connect(**kwargs):
     cnf = config.get_config()
     stolos_url = kwargs.pop('stolos_url')
     project_uuid = kwargs.pop('project_uuid')
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
-    click.echo('Initializing project "{}"...'.format(project_uuid), nl=False)
+    click.echo('Connecting to project "{}"...'.format(project_uuid), nl=False)
     project = api.projects_retrieve(cnf['user'][stolos_url], project_uuid)
     _initialize_project(stolos_url, project)
     click.echo('\t\tOk.')
-    click.echo('Your project is initialized! Run "stolos up" to launch it!')
+    click.echo('Your project is ready! Run "stolos up" to launch it!')
 
 
 @projects.command(help='Delete a Stolos project')

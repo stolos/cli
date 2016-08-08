@@ -27,7 +27,7 @@ Password (typing will be hidden):
 Authentication successful.
 ```
 
-#### `stolos projects create [OPTIONS] STACK PROJECT_NAME` Create a new Stolos project
+#### `stolos projects create [OPTIONS] STACK PROJECT_DIRECTORY` Create a new Stolos project
 ```
 Options:
   --public-url TEXT  The public URL of your project, defaults to random hex
@@ -43,8 +43,8 @@ Creating project "stolos"...		Ok.
 Project "stolos" is ready! Change directory with "cd stolos" and run "stolos up" to launch it!
 ```
 
-#### `stolos projects init [OPTIONS] PROJECT_UUID`
-Initialize an existing Stolos project.
+#### `stolos projects connect [OPTIONS] PROJECT_UUID`
+Connect the current directory to an existing Stolos project.
 
 
 ##### Options:
@@ -55,9 +55,9 @@ Initialize an existing Stolos project.
 
 ##### Example
 ```
-$ stolos projects init 7c3bc55d-d7d5-40d4-8765-cbc2e41b1978
-Initializing project "7c3bc55d-d7d5-40d4-8765-cbc2e41b1978"...		Ok.
-Your project is initialized! Run "stolos up" to launch it!
+$ stolos projects connect 7c3bc55d-d7d5-40d4-8765-cbc2e41b1978
+Connecting to project "7c3bc55d-d7d5-40d4-8765-cbc2e41b1978"...		Ok.
+Your project is ready! Run "stolos up" to launch it!
 ```
 
 #### `stolos projects list [OPTIONS]`
