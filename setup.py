@@ -11,7 +11,7 @@ setup(
         'clint',
         'pyyaml',
         'tabulate',
-        'requests==2.10.0',
+        'requests',
     ],
     entry_points='''
     [console_scripts]
