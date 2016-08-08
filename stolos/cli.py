@@ -90,6 +90,7 @@ def compose(ctx):
 def sync(repeat):
     _ensure_stolos_directory()
     cnf = config.get_config()
+    _config_environ(cnf)
     _sync(cnf, repeat).wait()
 
 
@@ -291,6 +292,7 @@ def _config_environ(cnf):
         'DOCKER_CERT_PATH': '.stolos',
         'DOCKER_TLS_VERIFY': '1',
         'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
+        'UNISON': '.stolos',
     })
 
 
@@ -318,11 +320,8 @@ def _sync(cnf, repeat):
         args.insert(0, '-fastcheck')
     if _is_windows():
         args.insert(0, 'win')
-    env = os.environ.copy()
-    env["UNISON"] = ".stolos"
     p = subprocess.Popen(
         ['unison'] + args,
-        env=env,
         stdout=sys.stdout,
         stderr=sys.stderr,
         stdin=sys.stdin)
@@ -353,5 +352,5 @@ def _ensure_stolos_directory(base_directory=None, raise_exc=True):
 def _is_windows():
     return {
         'win32': True,
-        'cygwin': True
+        'cygwin': True,
     }.get(sys.platform, False)
