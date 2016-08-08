@@ -10,6 +10,7 @@ setup(
         'Click',
         'clint',
         'pyyaml',
+        'tabulate',
     ],
     entry_points='''
     [console_scripts]
