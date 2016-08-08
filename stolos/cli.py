@@ -49,6 +49,7 @@ def login(**kwargs):
 
 @cli.command()
 def up():
+    _ensure_stolos_directory()
     cnf = config.get_config()
     _config_environ(cnf)
     click.echo('Syncing...')
@@ -77,6 +78,7 @@ def up():
 ))
 @click.pass_context
 def compose(ctx):
+    _ensure_stolos_directory()
     cnf = config.get_config()
     _config_environ(cnf)
     _compose(ctx.args).wait()
@@ -86,6 +88,7 @@ def compose(ctx):
 @click.option('--repeat/--oneoff', default=True,
               help='If the sync should run continuously, defaults to true')
 def sync(repeat):
+    _ensure_stolos_directory()
     cnf = config.get_config()
     _sync(cnf, repeat).wait()
 
@@ -173,7 +176,8 @@ def connect(**kwargs):
 def delete(**kwargs):
     cnf = config.get_config()
     project_uuid = kwargs.pop('project_uuid')
-    if not project_uuid and not _ensure_stolos_directory(raise_err=False):
+    if not project_uuid and not _ensure_stolos_directory(base_dir=None,
+                                                         raise_err=False):
         raise exceptions.CLIRequiredException('project-uuid')
     stolos_url = kwargs.pop('stolos_url')
     remove_directory = False
@@ -279,11 +283,22 @@ def _sync(cnf, repeat):
     return p
 
 
-def _ensure_stolos_directory(raise_err=True):
+def _ensure_stolos_directory(base_directory=None, raise_exc=True):
     """
     Ensures the existance of a Stolos directory. Either raises an exception, or
     returns the result.
+
+    If the current directory is not a Stolos directory, recursively traverses
+    towards the parent until it finds one.
     """
-    if not os.path.isdir('.stolos') and raise_err:
-        raise exceptions.NotStolosDirectoryException()
-    return os.path.isdir('.stolos')
+    if base_directory is None:
+        base_directory = os.getcwd()
+    parent = os.path.abspath(os.path.join(base_directory, os.pardir))
+    if parent == base_directory:
+        if raise_exc:
+            raise exceptions.NotStolosDirectoryException()
+        return False
+    if os.path.exists(os.path.join(base_directory, '.stolos')):
+        os.chdir(base_directory)
+        return True
+    return _ensure_stolos_directory(parent, raise_exc)
