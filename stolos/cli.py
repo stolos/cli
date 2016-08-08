@@ -230,6 +230,7 @@ def _initialize_project(stolos_url, project):
             """
 # Default unison profile for UNIX systems
 include common
+
 """
         )
     with open('.stolos/win.prf', 'w+') as windows_profile:
@@ -239,6 +240,7 @@ include common
 perms = 0
 
 include common
+
 """
         )
     with open('.stolos/common', 'w+') as common:
@@ -249,12 +251,10 @@ include common
 root = .
 root = ssh://stolos@${STOLOS_SERVER}//mnt/stolos/${STOLOS_PROJECT_ID}
 
-# This assumes that the unison command will run inside the project's root
 sshargs = -i .stolos/id_rsa
 
 ui = text
 addversionno = true
-repeat = 2
 prefer = newer
 fastcheck = true
 ignore = Path .stolos
