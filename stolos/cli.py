@@ -261,8 +261,8 @@ fastcheck = true
 ignore = Path .stolos
 silent = true
 
-# Set this to 'all' or 'verbose' for debugging
-debug = false
+# Enable this option and set it to 'all' or 'verbose' for debugging
+# debug = verbose
 
 """
             ).substitute(
