@@ -50,6 +50,7 @@ def login(**kwargs):
 @cli.command()
 def up():
     _ensure_stolos_directory()
+    _ensure_logged_in()
     cnf = config.get_config()
     _config_environ(cnf)
     click.echo('Syncing...')
@@ -103,6 +104,7 @@ def projects():
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
 def list(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.get('stolos_url')
     if not stolos_url:
@@ -123,6 +125,7 @@ def list(**kwargs):
 @click.argument('stack')
 @click.argument('project_directory')
 def create(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.pop('stolos_url')
     project_directory = kwargs.pop('project_directory')
@@ -158,6 +161,7 @@ def create(**kwargs):
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('project_uuid')
 def connect(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.pop('stolos_url')
     project_uuid = kwargs.pop('project_uuid')
@@ -175,6 +179,7 @@ def connect(**kwargs):
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('project-uuid', required=False)
 def delete(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     project_uuid = kwargs.pop('project_uuid')
     if not project_uuid and not _ensure_stolos_directory(base_dir=None,
@@ -354,3 +359,15 @@ def _is_windows():
         'win32': True,
         'cygwin': True,
     }.get(sys.platform, False)
+
+
+def _ensure_logged_in(stolos_url=None):
+    cnf = config.get_config()
+    if 'user' not in cnf:
+        raise exceptions.NotLoggedInException()
+    if 'default-api-server' not in cnf['user'] and not stolos_url:
+        raise exceptions.NotLoggedInException()
+    stolos_url = stolos_url or cnf['user']['default-api-server']
+    if stolos_url not in cnf['user']:
+        raise exceptions.NotLoggedInException()
+
