@@ -58,15 +58,28 @@ def up():
         click.echo('There was an error with the sync')
         return
     click.echo('Okay.')
+    click.echo('Starting services...')
+    if _compose(['up', '-d']).wait() != 0:
+        click.echo('There was an error with starting your services')
+        return
+    click.echo('Okay.')
+    handler = InteruptHandler()
+    signal.signal(signal.SIGINT, handler)
     processes = [('Syncing', _sync(cnf, True)),
                  ('Services', _compose(['up']))]
-    exit = False
+    exit = ''
     while not exit:
         for process_name, process in processes:
             if process.poll():
-                exit = '{} exited with exit code "{}"'.format(
-                    process_name, process.returncode)
-                processes.remove((process_name, process))
+                if handler.state == 0:
+                    exit = '{} exited with exit code "{}"'.format(
+                        process_name, process.returncode)
+                    for _, p in processes:
+                        if p is not process:
+                            p.terminate()
+                else:
+                    exit = 'Terminated by user'
+                break
         time.sleep(1)
     for _, p in processes:
         p.wait()
@@ -182,8 +195,8 @@ def delete(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     project_uuid = kwargs.pop('project_uuid')
-    if not project_uuid and not _ensure_stolos_directory(base_dir=None,
-                                                         raise_err=False):
+    if not project_uuid and not _ensure_stolos_directory(base_directory=None,
+                                                         raise_exc=False):
         raise exceptions.CLIRequiredException('project-uuid')
     stolos_url = kwargs.pop('stolos_url')
     remove_directory = False
@@ -307,12 +320,7 @@ def _compose(args):
         stdout=sys.stdout,
         stderr=sys.stderr,
         stdin=sys.stdin)
-    signal.signal(signal.SIGINT, _interrupt_handler)
     return p
-
-
-def _interrupt_handler(*args, **kwargs):
-    pass
 
 
 def _sync(cnf, repeat):
@@ -371,3 +379,14 @@ def _ensure_logged_in(stolos_url=None):
     if stolos_url not in cnf['user']:
         raise exceptions.NotLoggedInException()
 
+
+
+class InteruptHandler(object):
+    """
+    Helper class, for handling incoming signals and propagating them.
+    """
+    def __init__(self):
+        self.state = 0
+
+    def __call__(self, *args, **kwargs):
+        self.state = self.state + 1

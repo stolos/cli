@@ -101,14 +101,19 @@ Runs all your services on Stolos's infrastructure, using your local files. Also 
 ##### Example
 ```
 $ stolos up
-
-Initializing all services...                    OK.
-
-
-web        | Some logs here
-worker     | Some logs here
-ceryx      | Some logs here
-proxy      | Some logs here
+Syncing...
+Okay.
+Starting services...
+Starting 84b22c56c7664334b6d8912fc98c2835_cache_1
+Starting 84b22c56c7664334b6d8912fc98c2835_db_1
+Starting 84b22c56c7664334b6d8912fc98c2835_worker_1
+Starting 84b22c56c7664334b6d8912fc98c2835_web_1
+Starting 84b22c56c7664334b6d8912fc98c2835_watcher_1
+Okay.
+db_1       | Logs here...
+cache_1    | Logs here...
+worker_1   | Logs here...
+web_1      | Logs here...
 ```
 
 ## Development
