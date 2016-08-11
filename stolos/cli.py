@@ -108,6 +108,28 @@ def sync(repeat):
     _sync(repeat).wait()
 
 
+@cli.command(help='Open the public URL of the current project')
+def open(**kwargs):
+    _ensure_stolos_directory()
+    cnf = config.get_config()
+    click.launch('http://{}'.format(cnf['project']['public-url']))
+
+
+@cli.command(help='Get information about your current project')
+def info(**kwargs):
+    _ensure_stolos_directory()
+    cnf = config.get_config()
+    stolos_url = cnf['user']['default-api-server']
+    _ensure_logged_in(stolos_url)
+    headers = ['UUID', 'Stack', 'Public URL']
+    projects = [
+        (p['uuid'], p['stack']['slug'], p['routing_config']['domain'])
+        for p in [api.projects_retrieve(
+            cnf['user'][stolos_url], cnf['project']['uuid'])]
+    ]
+    click.echo(tabulate(projects, headers=headers))
+
+
 @cli.group(help='Manage your Stolos projects')
 def projects():
     pass
