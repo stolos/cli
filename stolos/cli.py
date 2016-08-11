@@ -54,7 +54,7 @@ def up():
     cnf = config.get_config()
     _config_environ(cnf)
     click.echo('Syncing...')
-    if _sync(cnf, False).wait() != 0:
+    if _sync(False).wait() != 0:
         click.echo('There was an error with the sync')
         return
     click.echo('Okay.')
@@ -65,7 +65,7 @@ def up():
     click.echo('Okay.')
     handler = InteruptHandler()
     signal.signal(signal.SIGINT, handler)
-    processes = [('Syncing', _sync(cnf, True)),
+    processes = [('Syncing', _sync(True)),
                  ('Services', _compose(['up']))]
     exit = ''
     while not exit:
@@ -105,7 +105,7 @@ def sync(repeat):
     _ensure_stolos_directory()
     cnf = config.get_config()
     _config_environ(cnf)
-    _sync(cnf, repeat).wait()
+    _sync(repeat).wait()
 
 
 @cli.group(help='Manage your Stolos projects')
@@ -209,6 +209,8 @@ def delete(**kwargs):
     api.projects_remove(cnf['user'][stolos_url], project_uuid)
     click.echo('\t\tOk.')
     if remove_directory:
+        # Also, remove any leftover project resources.
+        _compose('down')
         _deinitialize_project()
 
 
@@ -315,6 +317,10 @@ def _config_environ(cnf):
 
 
 def _compose(args):
+    """
+    Run Docker Compose, with the given arguments. These arguments should be in
+    array form `['-d', '--build']`, not as a single string.
+    """
     p = subprocess.Popen(
         ['docker-compose'] + args,
         stdout=sys.stdout,
@@ -323,7 +329,11 @@ def _compose(args):
     return p
 
 
-def _sync(cnf, repeat):
+def _sync(repeat):
+    """
+    Starts a proejct sync using Unison. Takes an extra parameter, which makes
+    the synchronization repeat using Unison `-repeat` or not.
+    """
     args = []
     if repeat:
         args.insert(0, '2')
@@ -363,6 +373,10 @@ def _ensure_stolos_directory(base_directory=None, raise_exc=True):
 
 
 def _is_windows():
+    """
+    Detects the current platform, returning True if running in Windows or
+    Cygwin.
+    """
     return {
         'win32': True,
         'cygwin': True,
@@ -370,6 +384,10 @@ def _is_windows():
 
 
 def _ensure_logged_in(stolos_url=None):
+    """
+    Ensures the user is logged in, at the given `stolos_url` Stolos server.
+    Raises an exception if not.
+    """
     cnf = config.get_config()
     if 'user' not in cnf:
         raise exceptions.NotLoggedInException()
