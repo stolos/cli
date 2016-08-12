@@ -112,7 +112,7 @@ def sync(repeat):
 
 
 @cli.command(help='Open the public URL of the current project')
-def open(**kwargs):
+def launch(**kwargs):
     _ensure_stolos_directory()
     cnf = config.get_config()
     public_url = 'http://{}'.format(cnf['project']['public-url'])
