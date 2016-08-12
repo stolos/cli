@@ -47,7 +47,7 @@ def login(**kwargs):
     click.echo('Authentication successful.')
 
 
-@cli.command()
+@cli.command(help='Run all your services and sync your files')
 def up():
     _ensure_stolos_directory()
     _ensure_logged_in()
@@ -88,8 +88,8 @@ def up():
 
 @cli.command(context_settings=dict(
     ignore_unknown_options=True,
-    allow_extra_args=True,
-))
+    allow_extra_args=True),
+    help='Run Docker Compose commands in Stolos')
 @click.pass_context
 def compose(ctx):
     _ensure_stolos_directory()
@@ -98,21 +98,26 @@ def compose(ctx):
     _compose(ctx.args).wait()
 
 
-@cli.command()
+@cli.command(help='Sync your files')
 @click.option('--repeat/--oneoff', default=True,
               help='If the sync should run continuously, defaults to true')
 def sync(repeat):
     _ensure_stolos_directory()
     cnf = config.get_config()
     _config_environ(cnf)
+    click.echo('Syncing...')
     _sync(repeat).wait()
+    if not repeat:
+        click.echo('Okay.')
 
 
 @cli.command(help='Open the public URL of the current project')
 def open(**kwargs):
     _ensure_stolos_directory()
     cnf = config.get_config()
-    click.launch('http://{}'.format(cnf['project']['public-url']))
+    public_url = 'http://{}'.format(cnf['project']['public-url'])
+    click.echo('Opening {}...'.format(public_url))
+    click.launch(public_url)
 
 
 @cli.command(help='Get information about your current project')

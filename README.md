@@ -27,6 +27,79 @@ Password (typing will be hidden):
 Authentication successful.
 ```
 
+#### `stolos up`
+Run all your services and sync your files
+
+##### Example
+```
+$ stolos up
+Syncing...
+Okay.
+Starting services...
+Starting 84b22c56c7664334b6d8912fc98c2835_cache_1
+Starting 84b22c56c7664334b6d8912fc98c2835_db_1
+Starting 84b22c56c7664334b6d8912fc98c2835_worker_1
+Starting 84b22c56c7664334b6d8912fc98c2835_web_1
+Starting 84b22c56c7664334b6d8912fc98c2835_watcher_1
+Okay.
+db_1       | Logs here...
+cache_1    | Logs here...
+worker_1   | Logs here...
+web_1      | Logs here...
+```
+
+
+#### `stolos open`
+Open the public URL of the current project
+
+##### Example
+```
+$ stolos open
+Opening http://sourcelair-stolos-akalipetis-zzqouw.sourcelair.stolos.io...
+```
+
+#### `stolos info`
+Get information about your current project
+
+##### Example
+```
+$ stolos info
+UUID                                  Stack              Public URL
+------------------------------------  -----------------  --------------------------------------------------------
+84b22c56-c766-4334-b6d8-912fc98c2835  sourcelair/stolos  sourcelair-stolos-akalipetis-zzqouw.sourcelair.stolos.io
+```
+
+#### `stolos sync [OPTIONS]`
+Sync your files
+
+##### Options:
+```
+  --repeat / --oneoff  If the sync should run continuously, defaults to true
+```
+
+##### Example
+```
+$ stolos sync --oneoff
+Syncing...
+Okay.
+```
+
+#### `stolos compose [COMPOSE_ARGS]`
+Run Docker Compose commands in Stolos
+
+##### Example
+```
+$ stolos compose ps
+                   Name                                 Command               State                 Ports
+------------------------------------------------------------------------------------------------------------------------
+84b22c56c7664334b6d8912fc98c2835_cache_1     docker-entrypoint.sh redis ...   Up      6379/tcp
+84b22c56c7664334b6d8912fc98c2835_db_1        /docker-entrypoint.sh postgres   Up      5432/tcp
+84b22c56c7664334b6d8912fc98c2835_watcher_1   ./check_n_run.sh make watch      Up
+84b22c56c7664334b6d8912fc98c2835_wdb_1       /bin/sh -c wdb.server.py - ...   Up      0.0.0.0:32796->1984/tcp, 19840/tcp
+84b22c56c7664334b6d8912fc98c2835_web_1       ./check_n_run.sh make dev        Up      0.0.0.0:32797->8000/tcp
+84b22c56c7664334b6d8912fc98c2835_worker_1    ./check_n_run.sh make worker     Up
+```
+
 #### `stolos projects create [OPTIONS] STACK PROJECT_DIRECTORY`
 Create a new Stolos project
 
@@ -93,27 +166,6 @@ Delete a Stolos project
 ```
 $ stolos projects delete
 Deleting project "69e5f6bd-76b7-4f6e-acd2-32823716a2d8"...		Ok.
-```
-
-#### `up`
-Runs all your services on Stolos's infrastructure, using your local files. Also updates files on Stolos automatically as you save them.
-
-##### Example
-```
-$ stolos up
-Syncing...
-Okay.
-Starting services...
-Starting 84b22c56c7664334b6d8912fc98c2835_cache_1
-Starting 84b22c56c7664334b6d8912fc98c2835_db_1
-Starting 84b22c56c7664334b6d8912fc98c2835_worker_1
-Starting 84b22c56c7664334b6d8912fc98c2835_web_1
-Starting 84b22c56c7664334b6d8912fc98c2835_watcher_1
-Okay.
-db_1       | Logs here...
-cache_1    | Logs here...
-worker_1   | Logs here...
-web_1      | Logs here...
 ```
 
 ## Development
