@@ -49,12 +49,12 @@ web_1      | Logs here...
 ```
 
 
-#### `stolos open`
+#### `stolos launch`
 Open the public URL of the current project
 
 ##### Example
 ```
-$ stolos open
+$ stolos launch
 Opening http://sourcelair-stolos-akalipetis-zzqouw.sourcelair.stolos.io...
 ```
 
