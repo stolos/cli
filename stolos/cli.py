@@ -47,6 +47,25 @@ def login(**kwargs):
     click.echo('Authentication successful.')
 
 
+@cli.command(help='Change your Stolos password')
+@click.option('--password', prompt='Current password (typing will be hidden)',
+              hide_input=True, help='Your current stolos password')
+@click.option('--new-password', prompt='New password (typing will be hidden)',
+              hide_input=True, help='Your new stolos password',
+              confirmation_prompt=True)
+@click.option('--stolos-url',
+              help='The URL of the Stolos server to use, if not the default')
+def password(**kwargs):
+    cnf = config.get_config()
+    stolos_url = kwargs.get('stolos_url')
+    if not stolos_url:
+        stolos_url = cnf['user']['default-api-server']
+    _ensure_logged_in(stolos_url)
+    api.change_password(
+        cnf['user'][stolos_url], kwargs['password'], kwargs['new_password'])
+    click.echo('Password successfully updated.')
+
+
 @cli.command(help='Run all your services and sync your files')
 def up():
     _ensure_stolos_directory()
