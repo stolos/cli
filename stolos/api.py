@@ -52,6 +52,21 @@ def authenticate(stolos_url, username, password):
 
 
 @handle_api_errors
+def change_password(credentials, current_password, new_password):
+    """
+    Change a user's password.
+    """
+    url = os.path.join(credentials['host'], 'api/a0.1/auth/password/')
+    headers = {'Authorization': 'Token {}'.format(credentials['token'])}
+    resp = requests.post(url, headers=headers, json={
+        'current_password': current_password,
+        'new_password': new_password,
+        're_new_password': new_password,
+    })
+    resp.raise_for_status()
+
+
+@handle_api_errors
 def projects_list(credentials):
     """
     List the projects of the currently logged in user.

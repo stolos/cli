@@ -27,6 +27,26 @@ Password (typing will be hidden):
 Authentication successful.
 ```
 
+#### `stolos password [OPTIONS]`
+Change your Stolos password
+
+##### Options:
+```
+--password TEXT      Your current stolos password
+--new-password TEXT  Your new stolos password
+--stolos-url TEXT    The URL of the Stolos server to use, if not the default
+--help               Show this message and exit.
+```
+
+##### Example
+```
+$ stolos password
+Current password (typing will be hidden):
+New password (typing will be hidden):
+Repeat for confirmation:
+Password successfully updated.
+```
+
 #### `stolos up`
 Run all your services and sync your files
 
@@ -47,7 +67,6 @@ cache_1    | Logs here...
 worker_1   | Logs here...
 web_1      | Logs here...
 ```
-
 
 #### `stolos launch`
 Open the public URL of the current project
