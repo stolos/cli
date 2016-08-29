@@ -241,7 +241,7 @@ def connect(**kwargs):
     click.echo('Connecting to project "{}"...'.format(project_uuid), nl=False)
     project = api.projects_retrieve(cnf['user'][stolos_url], project_uuid)
     _initialize_project(stolos_url, project)
-    click.echo('\t\tOk.')
+    click.echo('\t\tOkay.')
     click.echo('Your project is ready! Run "stolos up" to launch it!')
 
 
@@ -251,11 +251,11 @@ def connect(**kwargs):
 @click.argument('project-uuid', required=False)
 def delete(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
-    cnf = config.get_config()
     project_uuid = kwargs.pop('project_uuid')
     if not project_uuid and not _ensure_stolos_directory(base_directory=None,
                                                          raise_exc=False):
         raise exceptions.CLIRequiredException('project-uuid')
+    cnf = config.get_config()
     stolos_url = kwargs.pop('stolos_url')
     remove_directory = False
     if not project_uuid:
@@ -265,11 +265,14 @@ def delete(**kwargs):
         stolos_url = cnf['user']['default-api-server']
     click.echo('Deleting project "{}"...'.format(project_uuid), nl=False)
     api.projects_remove(cnf['user'][stolos_url], project_uuid)
-    click.echo('\t\tOk.')
+    click.echo('\t\tOkay.')
     if remove_directory:
+        click.echo('Clearing up Docker resources...')
         # Also, remove any leftover project resources.
-        _compose('down')
+        _config_environ(cnf)
+        _compose(['down']).wait()
         _deinitialize_project()
+        click.echo('Okay.')
 
 
 def _initialize_project(stolos_url, project):
