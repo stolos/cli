@@ -70,7 +70,7 @@ def password(**kwargs):
 @click.option('-d', '--detach', default=False, is_flag=True,
               help='Sync files once and run services in the background')
 @click.option('--logs/--no-logs', default=True,
-              help='Do not print services logs.')
+              help='Print/Do not print services logs.')
 @click.option('--build', default=False, is_flag=True,
               help='Build the services before starting them.')
 def up(detach, logs, build):
