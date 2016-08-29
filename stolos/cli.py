@@ -71,7 +71,9 @@ def password(**kwargs):
               help='Sync files once and run services in the background')
 @click.option('--logs/--no-logs', default=True,
               help='Do not print services logs.')
-def up(detach, logs):
+@click.option('--build', default=False, is_flag=True,
+              help='Build the services before starting them.')
+def up(detach, logs, build):
     _ensure_stolos_directory()
     _ensure_logged_in()
     cnf = config.get_config()
@@ -82,7 +84,10 @@ def up(detach, logs):
         return
     click.echo('Okay.')
     click.echo('Starting services...')
-    if _compose(['up', '-d']).wait() != 0:
+    compose_args = ['up', '-d', '--remove-orphans']
+    if build:
+        compose_args.append('--build')
+    if _compose(compose_args).wait() != 0:
         click.echo('There was an error with starting your services')
         return
     click.echo('Started services at {}'.format(cnf['project']['public-url']))
