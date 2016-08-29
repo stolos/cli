@@ -51,8 +51,9 @@ Password successfully updated.
 Run all your services and sync your files
 
 ##### Options:                                                                                                                                                                  
--d, --detach  Sync files once and run services in the background                                                                                                        
---help        Show this message and exit.
+-d, --detach        Sync files once and run services in the background
+--logs / --no-logs  Do not print services logs.
+--help              Show this message and exit
 ```
 
 ##### Example

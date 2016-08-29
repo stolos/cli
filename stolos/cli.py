@@ -69,7 +69,9 @@ def password(**kwargs):
 @cli.command(help='Run all your services and sync your files')
 @click.option('-d', '--detach', default=False, is_flag=True,
               help='Sync files once and run services in the background')
-def up(detach):
+@click.option('--logs/--no-logs', default=True,
+              help='Do not print services logs.')
+def up(detach, logs):
     _ensure_stolos_directory()
     _ensure_logged_in()
     cnf = config.get_config()
@@ -88,8 +90,9 @@ def up(detach):
         return
     handler = InteruptHandler()
     signal.signal(signal.SIGINT, handler)
-    processes = [('Syncing', _sync(True)),
-                 ('Services', _compose(['up']))]
+    processes = [('Syncing', _sync(True))]
+    if logs:
+        processes.append(('Services', _compose(['up'])))
     exit = ''
     while not exit:
         for process_name, process in processes:
