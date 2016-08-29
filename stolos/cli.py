@@ -83,7 +83,7 @@ def up(detach):
     if _compose(['up', '-d']).wait() != 0:
         click.echo('There was an error with starting your services')
         return
-    click.echo('Okay.')
+    click.echo('Started services at {}'.format(cnf['project']['public-url']))
     if detach:
         return
     handler = InteruptHandler()
