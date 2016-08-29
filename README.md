@@ -50,6 +50,11 @@ Password successfully updated.
 #### `stolos up`
 Run all your services and sync your files
 
+##### Options:                                                                                                                                                                  
+-d, --detach  Sync files once and run services in the background                                                                                                        
+--help        Show this message and exit.
+```
+
 ##### Example
 ```
 $ stolos up

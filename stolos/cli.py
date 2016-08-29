@@ -67,7 +67,9 @@ def password(**kwargs):
 
 
 @cli.command(help='Run all your services and sync your files')
-def up():
+@click.option('-d', '--detach', default=False, is_flag=True,
+              help='Sync files once and run services in the background')
+def up(detach):
     _ensure_stolos_directory()
     _ensure_logged_in()
     cnf = config.get_config()
@@ -82,6 +84,8 @@ def up():
         click.echo('There was an error with starting your services')
         return
     click.echo('Okay.')
+    if detach:
+        return
     handler = InteruptHandler()
     signal.signal(signal.SIGINT, handler)
     processes = [('Syncing', _sync(True)),
