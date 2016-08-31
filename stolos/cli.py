@@ -68,7 +68,7 @@ def password(**kwargs):
 
 @cli.command(help='Run all your services and sync your files')
 @click.option('-d', '--detach', default=False, is_flag=True,
-              help='Sync files once and run services in the background')
+              help='Sync files once and run services in the background.')
 @click.option('--logs/--no-logs', default=True,
               help='Print/Do not print services logs.')
 @click.option('--build', default=False, is_flag=True,
