@@ -67,6 +67,18 @@ def change_password(credentials, current_password, new_password):
 
 
 @handle_api_errors
+def stacks_list(credentials):
+    """
+    List the stacks accessible to the currently logged in user.
+    """
+    url = os.path.join(credentials['host'], 'api/a0.1/stacks/')
+    headers = {'Authorization': 'Token {}'.format(credentials['token'])}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
+
+@handle_api_errors
 def projects_list(credentials):
     """
     List the projects of the currently logged in user.
