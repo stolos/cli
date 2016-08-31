@@ -72,7 +72,7 @@ def password(**kwargs):
 @click.option('--logs/--no-logs', default=True,
               help='Print/Do not print services logs.')
 @click.option('--build', default=False, is_flag=True,
-              help='Build the services before starting them.')
+              help='Build service images before starting service containers.')
 def up(detach, logs, build):
     _ensure_stolos_directory()
     _ensure_logged_in()
