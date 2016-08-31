@@ -166,6 +166,28 @@ def info(**kwargs):
     click.echo(tabulate(projects, headers=headers))
 
 
+@cli.group(help='Manage your Stolos stacks')
+def stacks():
+    pass
+
+
+@stacks.command(help='List your stacks')
+@click.option('--stolos-url',
+              help='The URL of the Stolos server to use, if not the default')
+def list(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
+    cnf = config.get_config()
+    stolos_url = kwargs.get('stolos_url')
+    if not stolos_url:
+        stolos_url = cnf['user']['default-api-server']
+    headers = ['Stack name', 'Slug']
+    stacks = [
+        (stack['name'], stack['slug'])
+        for stack in api.stacks_list(cnf['user'][stolos_url])
+    ]
+    click.echo(tabulate(stacks, headers=headers))
+
+
 @cli.group(help='Manage your Stolos projects')
 def projects():
     pass
@@ -457,7 +479,6 @@ def _ensure_logged_in(stolos_url=None):
     stolos_url = stolos_url or cnf['user']['default-api-server']
     if stolos_url not in cnf['user']:
         raise exceptions.NotLoggedInException()
-
 
 
 class InteruptHandler(object):
