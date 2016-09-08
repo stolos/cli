@@ -55,10 +55,15 @@ class Timeout(ClickException):
 class ResourceDoesNotExist(ClickException):
     def __init__(self, result):
         super(ResourceDoesNotExist, self).__init__(
-            'Resource does not exist: {}'.format(result['detail']))
+            'Resource does not exist: {}'.format(result))
 
 
 class NotLoggedInException(ClickException):
     def __init__(self):
         super(NotLoggedInException, self).__init__(
             'You are not logged in, please run stolos login first.')
+
+
+class ResourceAlreadyExists(ClickException):
+    def __init__(self):
+        super(ResourceAlreadyExists, self).__init__('Resource already exists.')

@@ -1,13 +1,15 @@
-import os
-import os.path
-import random
-import shutil
-import signal
-import stat
-import string
-import subprocess
-import sys
 import time
+import sys
+import subprocess
+import string
+import stat
+import signal
+import shutil
+import random
+import platform
+import os.path
+import os
+
 from urlparse import urlparse
 
 import click
@@ -296,6 +298,85 @@ def delete(**kwargs):
         _deinitialize_project()
         click.echo('Okay.')
 
+
+@cli.group(help='Manage your Stolos public keys')
+def keys():
+    pass
+
+
+@keys.command(help='Upload an SSH public key to Stolos')
+@click.option('--stolos-url',
+              help='The URL of the Stolos server to use, if not the default')
+@click.option('--name',
+              help='The name of this key, default to this machine\'s hostname')
+@click.argument(
+    'public_key_path', required=False, type=click.Path(),
+    default='~/.ssh/id_rsa.pub')
+def upload(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
+    public_key_path = kwargs['public_key_path']
+    if not public_key_path.endswith('.pub'):
+        click.confirm(
+            ('Key {} appears to be a private, not a public key. '
+            'Are you sure you want to continue?').format(public_key_path),
+            abort=True)
+    expanded_public_key_path = os.path.expanduser(public_key_path)
+    if not os.path.exists(expanded_public_key_path):
+        raise click.exceptions.ClickException(
+            'File {} does not exist'.format(public_key_path))
+
+    cnf = config.get_config()
+    stolos_url = kwargs.pop('stolos_url')
+    if not stolos_url:
+        stolos_url = cnf['user']['default-api-server']
+
+    name = kwargs.get('name')
+    if not name:
+        name = platform.node()
+
+    with open(expanded_public_key_path, 'r') as fin:
+        project = api.keys_create(
+            cnf['user'][stolos_url], ssh_public_key=fin.read(), name=name)
+    click.echo('Public key {} uploaded successfully'.format(public_key_path))
+
+
+@keys.command(help='List your SSH public keys')
+@click.option('--stolos-url',
+              help='The URL of the Stolos server to use, if not the default')
+@click.option('--md5/--sha256', default=True,
+              help='The hasing algorithm to use, defaults to MD5')
+def list(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
+    cnf = config.get_config()
+    stolos_url = kwargs.get('stolos_url')
+    if not stolos_url:
+        stolos_url = cnf['user']['default-api-server']
+    algorithm = 'md5'
+    if not kwargs['md5']:
+        algorithm = 'sha256'
+    headers = ['UUID', 'Name', algorithm.upper()]
+    keys = [
+        (key['uuid'], key['name'], key[algorithm])
+        for key in api.keys_list(cnf['user'][stolos_url])
+    ]
+    click.echo(tabulate(keys, headers=headers))
+
+
+@keys.command(help='Delete an SSH public key')
+@click.option('--stolos-url',
+              help='The URL of the Stolos server to use, if not the default')
+@click.argument('public-key-uuid', required=True)
+def delete(**kwargs):
+    _ensure_logged_in(kwargs['stolos_url'])
+    public_key_uuid = kwargs.get('public_key_uuid')
+    cnf = config.get_config()
+    stolos_url = kwargs.pop('stolos_url')
+    if not stolos_url:
+        stolos_url = cnf['user']['default-api-server']
+    click.echo('Deleting SSH public key "{}"...'.format(public_key_uuid),
+               nl=False)
+    api.keys_remove(cnf['user'][stolos_url], public_key_uuid)
+    click.echo('\t\tOkay.')
 
 def _initialize_project(stolos_url, project):
     """
