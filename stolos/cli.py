@@ -1,14 +1,14 @@
-import time
-import sys
-import subprocess
-import string
-import stat
-import signal
-import shutil
-import random
-import platform
-import os.path
 import os
+import os.path
+import platform
+import random
+import shutil
+import signal
+import stat
+import string
+import subprocess
+import sys
+import time
 
 from urlparse import urlparse
 
@@ -112,7 +112,7 @@ def up(detach, logs, build):
                             p.terminate()
                 else:
                     exit = 'Terminated by user'
-                break
+                    break
         time.sleep(1)
     for _, p in processes:
         p.wait()
