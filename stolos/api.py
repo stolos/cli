@@ -115,7 +115,7 @@ def projects_retrieve(credentials, project_uuid):
     """
     Retrieve the project with the given UUID.
     """
-    url = credentials['host'] + '/api/a0.1/projects/', project_uuid
+    url = credentials['host'] + '/api/a0.1/projects/' + project_uuid
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -127,7 +127,7 @@ def projects_remove(credentials, project_uuid):
     """
     Remove the proejct with the given UUID.
     """
-    url = credentials['host'] + '/api/a0.1/projects/', project_uuid
+    url = credentials['host'] + '/api/a0.1/projects/' + project_uuid
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.delete(url, headers=headers)
     try:
