@@ -15,7 +15,7 @@ def _urljoin(*args):
     Joins given arguments into a url. Both trailing and leading slashes are
     stripped before joining.
     """
-    return "/".join(map(lambda x: str(x).strip('/'), args))
+    return '/'.join(map(lambda x: str(x).strip('/'), args)) + '/'
 
 
 def handle_api_errors(func):
