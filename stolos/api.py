@@ -27,7 +27,12 @@ def handle_api_errors(func):
             elif err.response.status_code == 400:
                 raise exceptions.BadRequest(err.response.json())
             elif err.response.status_code == 404:
-                raise exceptions.ResourceDoesNotExist(err.response.json())
+                try:
+                    raise exceptions.ResourceDoesNotExist(err.response.json())
+                except ValueError:
+                    raise exceptions.ResourceDoesNotExist(err.response.text)
+            elif err.response.status_code == 409:
+                raise exceptions.ResourceAlreadyExists()
             else:
                 raise exceptions.UnknownError(
                     err.response.status_code, err.response.text)
@@ -128,6 +133,47 @@ def projects_remove(credentials, project_uuid):
     Remove the proejct with the given UUID.
     """
     url = os.path.join(credentials['host'], 'api/a0.1/projects/', project_uuid)
+    headers = {'Authorization': 'Token {}'.format(credentials['token'])}
+    resp = requests.delete(url, headers=headers)
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        if not resp.status_code == 404:
+            raise
+
+
+@handle_api_errors
+def keys_create(credentials, ssh_public_key, name=None):
+    """
+    Create a new SSH public key.
+    """
+    url = os.path.join(credentials['host'], 'api/a0.1/keys/')
+    headers = {'Authorization': 'Token {}'.format(credentials['token'])}
+    resp = requests.post(url, headers=headers, json={
+        'public_key': ssh_public_key,
+        'name': name,
+    })
+    resp.raise_for_status()
+    return resp.json()
+
+
+@handle_api_errors
+def keys_list(credentials):
+    """
+    List the SSH public keys of the currently logged in user.
+    """
+    url = os.path.join(credentials['host'], 'api/a0.1/keys/')
+    headers = {'Authorization': 'Token {}'.format(credentials['token'])}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
+@handle_api_errors
+def keys_remove(credentials, public_key_uuid):
+    """
+    Remove the SSH public key with the given UUID.
+    """
+    url = os.path.join(credentials['host'], 'api/a0.1/keys/', public_key_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.delete(url, headers=headers)
     try:
