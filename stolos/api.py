@@ -10,6 +10,14 @@ import requests
 from stolos import exceptions
 
 
+def _urljoin(*args):
+    """
+    Joins given arguments into a url. Both trailing and leading slashes are
+    stripped before joining.
+    """
+    return '/'.join(map(lambda x: str(x).strip('/'), args)) + '/'
+
+
 def handle_api_errors(func):
     """
     Decorator for handling API errors. Catches `requests.exceptions.HTTPError`
@@ -49,7 +57,7 @@ def authenticate(stolos_url, username, password):
     Authenticate the user to the given Stolos server, using the given
     credentials. Returns the authentication token.
     """
-    url = os.path.join(stolos_url, 'api/a0.1/auth/login/')
+    url = _urljoin(stolos_url, 'api/a0.1/auth/login/')
     resp = requests.post(
         url, json={'username': username, 'password': password})
     resp.raise_for_status()
@@ -61,7 +69,7 @@ def change_password(credentials, current_password, new_password):
     """
     Change a user's password.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/auth/password/')
+    url = _urljoin(credentials['host'], 'api/a0.1/auth/password/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.post(url, headers=headers, json={
         'current_password': current_password,
@@ -76,7 +84,7 @@ def stacks_list(credentials):
     """
     List the stacks accessible to the currently logged in user.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/stacks/')
+    url = _urljoin(credentials['host'], 'api/a0.1/stacks/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -88,7 +96,7 @@ def projects_list(credentials):
     """
     List the projects of the currently logged in user.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/projects/')
+    url = _urljoin(credentials['host'], 'api/a0.1/projects/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -100,7 +108,7 @@ def projects_create(credentials, stack, public_url):
     """
     Create a new project, using the given stack and public URL.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/projects/')
+    url = _urljoin(credentials['host'], 'api/a0.1/projects/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.post(url, headers=headers, json={
         'set_stack': stack,
@@ -120,7 +128,7 @@ def projects_retrieve(credentials, project_uuid):
     """
     Retrieve the project with the given UUID.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/projects/', project_uuid)
+    url = _urljoin(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -132,7 +140,7 @@ def projects_remove(credentials, project_uuid):
     """
     Remove the proejct with the given UUID.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/projects/', project_uuid)
+    url = _urljoin(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.delete(url, headers=headers)
     try:
