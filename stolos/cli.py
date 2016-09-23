@@ -168,7 +168,8 @@ def info(**kwargs):
     click.echo(tabulate(projects, headers=headers))
 
 
-@cli.command(help='Print your Stolos environment')
+@cli.command(help='Display the commands to set up the environment for the '
+                  'Docker client')
 @click.option('--shell',
               help='Give the shell of your choice')
 def env(**kwargs):
