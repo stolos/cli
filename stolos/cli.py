@@ -15,7 +15,7 @@ from urlparse import urlparse
 import click
 from tabulate import tabulate
 
-from stolos import api, config, exceptions
+from stolos import api, config, exceptions, shell
 
 
 @click.group()
@@ -166,6 +166,22 @@ def info(**kwargs):
             cnf['user'][stolos_url], cnf['project']['uuid'])]
     ]
     click.echo(tabulate(projects, headers=headers))
+
+
+@cli.command(help='Display the commands to set up the environment for the '
+                  'Docker client')
+@click.option('--shell',
+              help='Give the shell of your choice')
+def env(**kwargs):
+    _ensure_stolos_directory()
+    cnf = config.get_config()
+    stolos_url = cnf['user']['default-api-server']
+    _ensure_logged_in(stolos_url)
+    env_dict = _get_environ(cnf)
+    command = 'stolos env'
+    if kwargs['shell']:
+        command = 'stolos env --shell={}'.format(kwargs['shell'])
+    shell.print_env_eval(command, kwargs['shell'], env_dict)
 
 
 @cli.group(help='Manage your Stolos stacks')
@@ -464,20 +480,27 @@ def _deinitialize_project():
         shutil.rmtree('.stolos', ignore_errors=True)
 
 
+def _get_environ(cnf):
+    """
+    Gets the needed envirionment for Stolos.
+    """
+    return {
+        'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
+        'COMPOSE_FILE': os.path.join(os.getcwd(), 'docker-compose.yaml'),
+        'DOCKER_HOST': 'tcp://{}:2376'.format(cnf['server']['host']),
+        'DOCKER_CERT_PATH': os.path.join(os.getcwd(), '.stolos'),
+        'DOCKER_TLS_VERIFY': '1',
+        'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
+        'UNISON': os.path.join(os.getcwd(), '.stolos'),
+    }
+
+
 def _config_environ(cnf):
     """
     Configures the environment with any needed environment variables for compose
     and Unison.
     """
-    os.environ.update({
-        'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
-        'COMPOSE_FILE': 'docker-compose.yaml',
-        'DOCKER_HOST': 'tcp://{}:2376'.format(cnf['server']['host']),
-        'DOCKER_CERT_PATH': '.stolos',
-        'DOCKER_TLS_VERIFY': '1',
-        'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
-        'UNISON': '.stolos',
-    })
+    os.environ.update(_get_environ(cnf))
 
 
 def _compose(args):
