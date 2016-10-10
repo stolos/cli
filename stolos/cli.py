@@ -144,7 +144,7 @@ def sync(repeat):
         click.echo('Okay.')
 
 
-@cli.command(name='open', help='Open the public URL of the current project')
+@cli.command(name='open', help='Open the public URL of the current project. Optionally provide service and port')
 @click.argument('service', required=False)
 @click.argument('port', required=False)
 def launch(**kwargs):
