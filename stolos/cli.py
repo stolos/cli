@@ -144,11 +144,21 @@ def sync(repeat):
         click.echo('Okay.')
 
 
-@cli.command(help='Open the public URL of the current project')
+@cli.command(name='open', help='Open the public URL of the current project')
+@click.argument('service', required=False)
+@click.argument('port', required=False)
 def launch(**kwargs):
     _ensure_stolos_directory()
     cnf = config.get_config()
     public_url = 'http://{}'.format(cnf['project']['public-url'])
+    service = kwargs.get('service')
+    port = kwargs.get('port')
+    if service:
+        subdomain, _, domain = public_url.partition('.')
+        if port:
+            public_url = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
+        else:
+            public_url = '{}-{}.{}'.format(subdomain, service, domain)
     click.echo('Opening {}...'.format(public_url))
     click.launch(public_url)
 
