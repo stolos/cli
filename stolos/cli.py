@@ -99,7 +99,10 @@ def up(detach, logs, build):
     signal.signal(signal.SIGINT, handler)
     processes = [('Syncing', _sync(True))]
     if logs:
-        processes.append(('Services', _compose(['up'])))
+        compose_args = ['logs', '--tail=20', '-f']
+        if _is_windows():
+            compose_args.append('--no-color')
+        processes.append(('Services', _compose(compose_args)))
     exit = ''
     while not exit:
         for process_name, process in processes:
