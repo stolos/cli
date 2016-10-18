@@ -559,10 +559,11 @@ def _sync(repeat):
     _config_environ(cnf)
     identity_file = cnf['user'][cnf['user']['default-api-server']].get('identity-file')
     if identity_file is None:
-        click.echo('Syncing not possible. No public key was found.')
+        click.echo(click.style('[WARNING] ', bold=True) + 'No public key was found. Your user\'s default key will be used.')
         click.echo('To upload a public ssh key, use the following command:')
         click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
-        exit(1)
+        home = os.path.expanduser('~')
+        identity_file = os.path.join(home, '.ssh', 'id_rsa')
     args = []
     args.insert(0, '-i {}'.format(identity_file))
     args.insert(0, '-sshargs')
