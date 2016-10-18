@@ -33,13 +33,18 @@ def cli():
 @click.pass_context
 def login(ctx, **kwargs):
     host = urlparse(kwargs['stolos_url']).hostname
+    cnf = config.get_user_config()
+    identity_file = cnf['user'][host].get('identity-file')
+    new_config = {
+        'token': api.authenticate(**kwargs)['auth_token'],
+        'username': kwargs['username'],
+        'host': kwargs['stolos_url']
+    }
+    if identity_file:
+        new_config['identity-file'] = identity_file
     config.update_user_config({
         'user': {
-            host: {
-                'token': api.authenticate(**kwargs)['auth_token'],
-                'username': kwargs['username'],
-                'host': kwargs['stolos_url'],
-            },
+            host: new_config
         },
     })
     if 'default-api-server' not in config.get_user_config()['user']:
@@ -49,6 +54,8 @@ def login(ctx, **kwargs):
             },
         })
     click.echo('Authentication successful.')
+    if identity_file is not None:
+        return
     home = os.path.expanduser('~')
     key_path = os.path.join(home, '.ssh', 'id_rsa')
     public_key_path = key_path + '.pub'
