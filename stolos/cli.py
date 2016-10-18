@@ -2,6 +2,7 @@ import os
 import os.path
 import platform
 import random
+import re
 import shutil
 import signal
 import stat
@@ -29,15 +30,21 @@ def cli():
               hide_input=True, help='Your stolos password')
 @click.option('--stolos-url', default='https://api.stolos.io',
               help='The URL of the Stolos server to use')
-def login(**kwargs):
+@click.pass_context
+def login(ctx, **kwargs):
     host = urlparse(kwargs['stolos_url']).hostname
+    cnf = config.get_user_config()
+    identity_file = cnf['user'][host].get('identity-file')
+    new_config = {
+        'token': api.authenticate(**kwargs)['auth_token'],
+        'username': kwargs['username'],
+        'host': kwargs['stolos_url']
+    }
+    if identity_file:
+        new_config['identity-file'] = identity_file
     config.update_user_config({
         'user': {
-            host: {
-                'token': api.authenticate(**kwargs)['auth_token'],
-                'username': kwargs['username'],
-                'host': kwargs['stolos_url'],
-            },
+            host: new_config
         },
     })
     if 'default-api-server' not in config.get_user_config()['user']:
@@ -47,6 +54,16 @@ def login(**kwargs):
             },
         })
     click.echo('Authentication successful.')
+    if identity_file is not None:
+        return
+    home = os.path.expanduser('~')
+    key_path = os.path.join(home, '.ssh', 'id_rsa')
+    public_key_path = key_path + '.pub'
+    if os.path.exists(key_path) and os.path.exists(public_key_path):
+        ctx.invoke(upload, public_key_path=public_key_path, stolos_url=host)
+    else:
+        click.echo('No ssh key was found. To enable stolos syncing, upload a public ssh key using the following command:')
+        click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
 
 
 @cli.command(help='Change your Stolos password')
@@ -366,6 +383,15 @@ def upload(**kwargs):
     with open(expanded_public_key_path, 'r') as fin:
         project = api.keys_create(
             cnf['user'][stolos_url], ssh_public_key=fin.read(), name=name)
+
+    updated_conf = cnf['user'][stolos_url]
+    updated_conf['identity-file'] = os.path.abspath(
+        re.sub('.pub$', '', expanded_public_key_path))
+    config.update_user_config({
+        'user': {
+            stolos_url: updated_conf,
+        },
+    })
     click.echo('Public key {} uploaded successfully'.format(public_key_path))
 
 
@@ -434,9 +460,6 @@ def _initialize_project(stolos_url, project):
     with open('.stolos/key.pem', 'w+') as key_pem:
         key_pem.write(project['server']['docker_key_pem'])
         os.chmod('.stolos/key.pem', 0600)
-    with open('.stolos/id_rsa', 'w+') as id_rsa:
-        id_rsa.write(project['server']['unison_id_rsa'])
-        os.chmod('.stolos/id_rsa', 0600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
     with open('.stolos/default.prf', 'w+') as default_profile:
@@ -464,8 +487,6 @@ include common
 # Roots of the synchronization
 root = .
 root = ssh://stolos@${STOLOS_SERVER}//mnt/stolos/${STOLOS_PROJECT_ID}
-
-sshargs = -i .stolos/id_rsa
 
 ui = text
 addversionno = true
@@ -534,7 +555,18 @@ def _sync(repeat):
     Starts a proejct sync using Unison. Takes an extra parameter, which makes
     the synchronization repeat using Unison `-repeat` or not.
     """
+    cnf = config.get_config()
+    _config_environ(cnf)
+    identity_file = cnf['user'][cnf['user']['default-api-server']].get('identity-file')
+    if identity_file is None:
+        click.echo(click.style('[WARNING] ', bold=True) + 'No public key was found. Your user\'s default key will be used.')
+        click.echo('To upload a public ssh key, use the following command:')
+        click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
+        home = os.path.expanduser('~')
+        identity_file = os.path.join(home, '.ssh', 'id_rsa')
     args = []
+    args.insert(0, '-i {}'.format(identity_file))
+    args.insert(0, '-sshargs')
     if repeat:
         args.insert(0, '2')
         args.insert(0, '-repeat')
