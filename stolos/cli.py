@@ -460,9 +460,6 @@ def _initialize_project(stolos_url, project):
     with open('.stolos/key.pem', 'w+') as key_pem:
         key_pem.write(project['server']['docker_key_pem'])
         os.chmod('.stolos/key.pem', 0600)
-    with open('.stolos/id_rsa', 'w+') as id_rsa:
-        id_rsa.write(project['server']['unison_id_rsa'])
-        os.chmod('.stolos/id_rsa', 0600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
     with open('.stolos/default.prf', 'w+') as default_profile:
