@@ -30,7 +30,8 @@ def cli():
               hide_input=True, help='Your stolos password')
 @click.option('--stolos-url', default='https://api.stolos.io',
               help='The URL of the Stolos server to use')
-def login(**kwargs):
+@click.pass_context
+def login(ctx, **kwargs):
     host = urlparse(kwargs['stolos_url']).hostname
     config.update_user_config({
         'user': {
@@ -52,8 +53,7 @@ def login(**kwargs):
     key_path = os.path.join(home, '.ssh', 'id_rsa')
     public_key_path = key_path + '.pub'
     if os.path.exists(key_path) and os.path.exists(public_key_path):
-        click.echo('uploading keys here')
-        #(upload, public_key_path=public_key_path, stolos_url=host)
+        ctx.invoke(upload, public_key_path=public_key_path, stolos_url=host)
     else:
         click.echo('No ssh key was found. To enable stolos syncing, upload a public ssh key using the following command:')
         click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
