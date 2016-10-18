@@ -556,7 +556,7 @@ def _sync(repeat):
     identity_file = cnf['user'][cnf['user']['default-api-server']].get('identity-file')
     if identity_file is None:
         click.echo('Syncing not possible. No public key was found.')
-        click.echo('To upload a public ssh key and continue, use the following command:')
+        click.echo('To upload a public ssh key, use the following command:')
         click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
         exit(1)
     args = []
