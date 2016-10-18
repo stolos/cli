@@ -2,6 +2,7 @@ import os
 import os.path
 import platform
 import random
+import re
 import shutil
 import signal
 import stat
@@ -47,6 +48,15 @@ def login(**kwargs):
             },
         })
     click.echo('Authentication successful.')
+    home = os.path.expanduser('~')
+    key_path = os.path.join(home, '.ssh', 'id_rsa')
+    public_key_path = key_path + '.pub'
+    if os.path.exists(key_path) and os.path.exists(public_key_path):
+        click.echo('uploading keys here')
+        #(upload, public_key_path=public_key_path, stolos_url=host)
+    else:
+        click.echo('No ssh key was found. To enable stolos syncing, upload a public ssh key using the following command:')
+        click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
 
 
 @cli.command(help='Change your Stolos password')
@@ -366,6 +376,15 @@ def upload(**kwargs):
     with open(expanded_public_key_path, 'r') as fin:
         project = api.keys_create(
             cnf['user'][stolos_url], ssh_public_key=fin.read(), name=name)
+
+    updated_conf = cnf['user'][stolos_url]
+    updated_conf['identity-file'] = os.path.abspath(
+        re.sub('.pub$', '', expanded_public_key_path))
+    config.update_user_config({
+        'user': {
+            stolos_url: updated_conf,
+        },
+    })
     click.echo('Public key {} uploaded successfully'.format(public_key_path))
 
 
@@ -465,8 +484,6 @@ include common
 root = .
 root = ssh://stolos@${STOLOS_SERVER}//mnt/stolos/${STOLOS_PROJECT_ID}
 
-sshargs = -i .stolos/id_rsa
-
 ui = text
 addversionno = true
 prefer = newer
@@ -534,7 +551,17 @@ def _sync(repeat):
     Starts a proejct sync using Unison. Takes an extra parameter, which makes
     the synchronization repeat using Unison `-repeat` or not.
     """
+    cnf = config.get_config()
+    _config_environ(cnf)
+    identity_file = cnf['user'][cnf['user']['default-api-server']].get('identity-file')
+    if identity_file is None:
+        click.echo('Syncing not possible. No public key was found.')
+        click.echo('To upload a public ssh key and continue, use the following command:')
+        click.secho('\tstolos keys upload [PUBLIC_KEY_PATH]\n', bold=True)
+        exit(1)
     args = []
+    args.insert(0, '-i {}'.format(identity_file))
+    args.insert(0, '-sshargs')
     if repeat:
         args.insert(0, '2')
         args.insert(0, '-repeat')
