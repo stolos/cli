@@ -534,10 +534,13 @@ def _config_environ(cnf):
     cnf = config.get_config()
     with open('.stolos/ca.pem', 'w+') as cert_pem:
         cert_pem.write(cnf['user'][default-api-server].get('ca-pem'))
+        os.chmod('.stolos/ca.pem', 0o600)
     with open('.stolos/cert.pem', 'w+') as cert_pem:
         cert_pem.write(cnf['user'][default-api-server].get('cert-pem'))
+        os.chmod('.stolos/cert.pem', 0o600)
     with open('.stolos/key.pem', 'w+') as key_pem:
         key_pem.write(cnf['user'][default-api-server].get('key-pem'))
+        os.chmod('.stolos/key.pem', 0o600)
     os.environ.update(_get_environ(cnf))
 
 
