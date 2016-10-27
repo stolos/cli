@@ -34,9 +34,13 @@ def cli():
 def login(ctx, **kwargs):
     host = urlparse(kwargs['stolos_url']).hostname
     cnf = config.get_user_config()
-    identity_file = cnf['user'][host].get('identity-file')
+    identity_file = cnf['user'].get(host, {}).get('identity-file')
+    auth_response = api.authenticate(**kwargs)
     new_config = {
-        'token': api.authenticate(**kwargs)['auth_token'],
+        'token': auth_response['auth_token'],
+        'key-pem': auth_response['docker_key_pem'],
+        'cert-pem': auth_response['docker_cert_pem'],
+        'ca-pem': auth_response['docker_ca_pem'],
         'username': kwargs['username'],
         'host': kwargs['stolos_url']
     }
@@ -54,6 +58,7 @@ def login(ctx, **kwargs):
             },
         })
     click.echo('Authentication successful.')
+
     if identity_file is not None:
         return
     home = os.path.expanduser('~')
@@ -451,15 +456,6 @@ def _initialize_project(stolos_url, project):
             'host': project['server']['host'],
         },
     })
-    with open('.stolos/ca.pem', 'w+') as ca_pem:
-        ca_pem.write(project['server']['docker_ca_pem'])
-        os.chmod('.stolos/ca.pem', 0600)
-    with open('.stolos/cert.pem', 'w+') as cert_pem:
-        cert_pem.write(project['server']['docker_cert_pem'])
-        os.chmod('.stolos/cert.pem', 0600)
-    with open('.stolos/key.pem', 'w+') as key_pem:
-        key_pem.write(project['server']['docker_key_pem'])
-        os.chmod('.stolos/key.pem', 0600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
     with open('.stolos/default.prf', 'w+') as default_profile:
@@ -532,8 +528,16 @@ def _get_environ(cnf):
 def _config_environ(cnf):
     """
     Configures the environment with any needed environment variables for compose
-    and Unison.
+    and Unison. Also updates the docker certificates to the latest valid from
+    user config.
     """
+    cnf = config.get_config()
+    with open('.stolos/ca.pem', 'w+') as cert_pem:
+        cert_pem.write(cnf['user'][default-api-server].get('ca-pem'))
+    with open('.stolos/cert.pem', 'w+') as cert_pem:
+        cert_pem.write(cnf['user'][default-api-server].get('cert-pem'))
+    with open('.stolos/key.pem', 'w+') as key_pem:
+        key_pem.write(cnf['user'][default-api-server].get('key-pem'))
     os.environ.update(_get_environ(cnf))
 
 
