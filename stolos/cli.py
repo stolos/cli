@@ -291,6 +291,9 @@ def create(**kwargs):
     os.chdir(project_directory)
     _initialize_project(stolos_url, project)
     click.echo('\t\tOk.')
+    if project_directory == '.':
+        click.echo('Your project is ready! Run "stolos up" to launch it!')
+        return
     click.echo(
         ('Your project is ready! Change directory with "cd {0}" and run '
          '"stolos up" to launch it!').format(project_directory))
