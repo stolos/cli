@@ -219,18 +219,18 @@ def stacks():
     pass
 
 
-@stacks.command(help='List your stacks')
+@stacks.command(name='list', help='List your stacks')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
-def list(**kwargs):
+def stacks_list(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.get('stolos_url')
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
-    headers = ['Stack name', 'Slug']
+    headers = ['Stack name', 'Slug', 'Description']
     stacks = [
-        (stack['name'], stack['slug'])
+        (stack['name'], stack['slug'], stack.get('description'))
         for stack in api.stacks_list(cnf['user'][stolos_url])
     ]
     click.echo(tabulate(stacks, headers=headers))
@@ -241,10 +241,10 @@ def projects():
     pass
 
 
-@projects.command(help='List your projects')
+@projects.command(name='list', help='List your projects')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
-def list(**kwargs):
+def projects_list(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.get('stolos_url')
@@ -398,12 +398,12 @@ def upload(**kwargs):
     click.echo('Public key {} uploaded successfully'.format(public_key_path))
 
 
-@keys.command(help='List your SSH public keys')
+@keys.command(name='list', help='List your SSH public keys')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
 @click.option('--md5/--sha256', default=True,
               help='The hasing algorithm to use, defaults to MD5')
-def list(**kwargs):
+def keys_list(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
     cnf = config.get_config()
     stolos_url = kwargs.get('stolos_url')
