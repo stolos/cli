@@ -34,7 +34,7 @@ def cli():
 def login(ctx, **kwargs):
     host = urlparse(kwargs['stolos_url']).hostname
     cnf = config.get_user_config()
-    identity_file = cnf['user'].get(host, {}).get('identity-file')
+    identity_file = cnf.get('user', {}).get(host, {}).get('identity-file')
     auth_response = api.authenticate(**kwargs)
     new_config = {
         'token': auth_response['auth_token'],
