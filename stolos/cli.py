@@ -542,12 +542,14 @@ def _get_environ(cnf):
         services = compose_file.get('services', {})
         subdomain, _, domain = public_url.partition('.')
         for service, service_details in services.iteritems():
-            if 'ports' in service_details:
-                service_key = 'STOLOS_PUBLIC_URL_{}'.format(service.upper())
-                env[service_key] = '{}-{}.{}'.format(subdomain, service, domain)
-                for port in service_details['ports']:
-                    service_key = 'STOLOS_PUBLIC_URL_{}_{}'.format(service.upper(), port)
-                    env[service_key] = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
+            if 'ports' not in service_details:
+                continue
+            normalized_service = re.sub(r'[^a-zA-Z0-9_]', '_', service.upper())
+            service_key = 'STOLOS_PUBLIC_URL_{}'.format(normalized_service)
+            env[service_key] = '{}-{}.{}'.format(subdomain, service, domain)
+            for port in service_details['ports']:
+                service_port_key = '{}_{}'.format(service_key, port)
+                env[service_port_key] = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
     return env
 
 
