@@ -540,9 +540,9 @@ def _get_environ(cnf):
         with open(compose_file_path, 'r') as fin:
             compose_file = yaml.load(fin)
         services = compose_file.get('services', {})
+        subdomain, _, domain = public_url.partition('.')
         for service, service_details in services.iteritems():
             if 'ports' in service_details:
-                subdomain, _, domain = public_url.partition('.')
                 service_key = 'STOLOS_PUBLIC_URL_{}'.format(service.upper())
                 env[service_key] = '{}-{}.{}'.format(subdomain, service, domain)
                 for port in service_details['ports']:
