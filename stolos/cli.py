@@ -520,14 +520,18 @@ def _initialize_services():
     with open(compose_file_path, 'r') as fin:
         compose_file = yaml.load(fin)
     services = compose_file.get('services', {})
+    valid = re.compile(r'^([^=]*)=(.*)')
     for service, service_details in services.iteritems():
         if 'environment' not in service_details:
             continue
         environment = service_details['environment']
         if type(environment) == list:
-            environment = {
-                var.split('=')[0]: var.split('=')[1] for var in environment
-            }
+            environment = {}
+            for var in service_details['environment']:
+                match = valid.match(var)
+                if match is None:
+                    continue
+                environment[match.group(1)] = match.group(2)
         if 'STOLOS_REPO_URL' not in environment:
             continue
         clone_urls[service] = environment['STOLOS_REPO_URL']
