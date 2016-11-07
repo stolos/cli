@@ -20,7 +20,7 @@ def _urljoin(*args):
 
 def _ensure_protocol(url):
     if not url.startswith('http'):
-        return 'https://{}'.format(stolos_url)
+        return 'https://{}'.format(url)
     return url
 
 
