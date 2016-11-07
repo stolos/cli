@@ -1,7 +1,6 @@
 """
 API client for use in the Stolos CLI.
 """
-import os.path
 from functools import wraps
 
 import click
