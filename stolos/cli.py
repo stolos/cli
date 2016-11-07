@@ -562,12 +562,27 @@ def _initialize_services():
                 )
             )
             continue
-        init_process = subprocess.Popen(
-            [scm, 'clone'] + clone_url.split(' '),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-            stdin=sys.stdin
-        )
+        try:
+            init_process = subprocess.Popen(
+                [scm, 'clone'] + clone_url.split(' '),
+                stdout=sys.stdout,
+                stderr=sys.stderr,
+                stdin=sys.stdin
+            )
+        except OSError as e:
+            if e.errno == 2:
+                results['failure'].append(
+                    'Service "{}" initialization from "{}" failed.\nPlease install {} and attempt to manually initialize.'.format(
+                        service, clone_url.split(' ')[0], scm
+                    )
+                )
+            else:
+                results['failure'].append(
+                    'Service "{}" initialization from "{}" failed with the following error:\n\t{}}'.format(
+                        service, clone_url.split(' ')[0], e
+                    )
+                )
+            continue
         if init_process.wait() == 0:
             results['success'].append(
                 'Service "{}" was successfully initialized.'.format(service)
@@ -575,7 +590,7 @@ def _initialize_services():
         else:
             results['failure'].append(
                 'Service "{}" initialization from "{}" failed.\nPlease attempt to manually initialize.'.format(
-                    service, url
+                    service, clone_url.split(' ')[0]
                 )
             )
 
