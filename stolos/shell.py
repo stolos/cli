@@ -8,13 +8,7 @@ import click
 
 
 ENV_TEMPLATE = """
-{prefix}COMPOSE_PROJECT_NAME{delimiter}{COMPOSE_PROJECT_NAME}{suffix}\
-{prefix}COMPOSE_FILE{delimiter}{COMPOSE_FILE}{suffix}\
-{prefix}DOCKER_TLS_VERIFY{delimiter}1{suffix}\
-{prefix}DOCKER_HOST{delimiter}{DOCKER_HOST}{suffix}\
-{prefix}DOCKER_CERT_PATH{delimiter}{DOCKER_CERT_PATH}{suffix}\
-{prefix}STOLOS_REMOTE_DIR{delimiter}{STOLOS_REMOTE_DIR}{suffix}\
-{prefix}UNISON{delimiter}{UNISON}{suffix}
+{env_vars}\
 {usage_hint}
 """
 
@@ -118,10 +112,15 @@ def print_env_eval(command, shell, env_dict):
         click.echo(
             'Shell could not be detected, falling back to bash', err=True)
     config = shell_config(shell)
-    config.update(env_dict)
     hint, comment = usage_hint(command, shell)
     uhint = '{} Run this command to configure your shell: \n{} {}\n'.format(
         comment, comment, hint)
     config['usage_hint'] = uhint
+    env_vars = ''
+    for key in sorted(env_dict.keys()):
+        config['key'] = key
+        config['val'] = env_dict[key]
+        env_vars = env_vars + '{prefix}{key}{delimiter}{val}{suffix}'.format(**config)
+    config['env_vars'] = env_vars
     msg = ENV_TEMPLATE.format(**config)
     click.echo(msg)

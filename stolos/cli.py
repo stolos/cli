@@ -1,5 +1,4 @@
 import os
-import os.path
 import platform
 import random
 import re
@@ -10,6 +9,7 @@ import string
 import subprocess
 import sys
 import time
+import yaml
 
 from urlparse import urlparse
 
@@ -530,17 +530,38 @@ def _deinitialize_project():
 
 def _get_environ(cnf):
     """
-    Gets the needed envirionment for Stolos.
+    Gets the needed environment for Stolos.
     """
-    return {
+    compose_file_path = os.path.join(os.getcwd(), 'docker-compose.yaml')
+    public_url = cnf['project']['public-url']
+    env = {
+        'STOLOS_PUBLIC_URL': public_url,
+        'STOLOS_STACK_SLUG': cnf['project']['stack'],
+        'STOLOS_STACK_NAME': os.path.basename(cnf['project']['stack']),
+        'STOLOS_UUID': cnf['project']['uuid'],
         'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
-        'COMPOSE_FILE': os.path.join(os.getcwd(), 'docker-compose.yaml'),
+        'COMPOSE_FILE': compose_file_path,
         'DOCKER_HOST': 'tcp://{}:2376'.format(cnf['server']['host']),
         'DOCKER_CERT_PATH': os.path.join(os.getcwd(), '.stolos'),
         'DOCKER_TLS_VERIFY': '1',
         'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
         'UNISON': os.path.join(os.getcwd(), '.stolos'),
     }
+    if os.path.exists(compose_file_path):
+        with open(compose_file_path, 'r') as fin:
+            compose_file = yaml.load(fin)
+        services = compose_file.get('services', {})
+        subdomain, _, domain = public_url.partition('.')
+        for service, service_details in services.iteritems():
+            if 'ports' not in service_details:
+                continue
+            normalized_service = re.sub(r'[^a-zA-Z0-9_]', '_', service.upper())
+            service_key = 'STOLOS_PUBLIC_URL_{}'.format(normalized_service)
+            env[service_key] = '{}-{}.{}'.format(subdomain, service, domain)
+            for port in service_details['ports']:
+                service_port_key = '{}_{}'.format(service_key, port)
+                env[service_port_key] = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
+    return env
 
 
 def _config_environ(cnf):
