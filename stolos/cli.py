@@ -40,7 +40,7 @@ def _get_hostname(url):
               help='The URL of the Stolos server to use')
 @click.pass_context
 def login(ctx, **kwargs):
-    stolos_url = _ensure_protocol(kwargs['stolos_url'])
+    stolos_url = api._ensure_protocol(kwargs['stolos_url'])
     host = _get_hostname(stolos_url)
     cnf = config.get_user_config()
     identity_file = cnf['user'][host].get('identity-file')
