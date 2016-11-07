@@ -24,6 +24,14 @@ def cli():
     pass
 
 
+def _get_hostname(url):
+    """Strip url from protocol and trailing slash, in order to use it as config
+    key
+    """
+    url = api._ensure_protocol(url)
+    return urlparse(url).hostname
+
+
 @cli.command(help='Log in to a Stolos environment')
 @click.option('--username', prompt=True, help='Your Stolos username')
 @click.option('--password', prompt='Password (typing will be hidden)',
@@ -32,13 +40,14 @@ def cli():
               help='The URL of the Stolos server to use')
 @click.pass_context
 def login(ctx, **kwargs):
-    host = urlparse(kwargs['stolos_url']).hostname
+    stolos_url = _ensure_protocol(kwargs['stolos_url'])
+    host = _get_hostname(stolos_url)
     cnf = config.get_user_config()
     identity_file = cnf['user'][host].get('identity-file')
     new_config = {
         'token': api.authenticate(**kwargs)['auth_token'],
         'username': kwargs['username'],
-        'host': kwargs['stolos_url']
+        'host': stolos_url
     }
     if identity_file:
         new_config['identity-file'] = identity_file
@@ -81,7 +90,9 @@ def password(**kwargs):
         stolos_url = cnf['user']['default-api-server']
     _ensure_logged_in(stolos_url)
     api.change_password(
-        cnf['user'][stolos_url], kwargs['password'], kwargs['new_password'])
+        cnf['user'][_get_hostname(stolos_url)],
+        kwargs['password'], kwargs['new_password']
+    )
     click.echo('Password successfully updated.')
 
 
@@ -193,7 +204,7 @@ def info(**kwargs):
     projects = [
         (p['uuid'], p['stack']['slug'], p['routing_config']['domain'])
         for p in [api.projects_retrieve(
-            cnf['user'][stolos_url], cnf['project']['uuid'])]
+            cnf['user'][_get_hostname(stolos_url)], cnf['project']['uuid'])]
     ]
     click.echo(tabulate(projects, headers=headers))
 
@@ -231,7 +242,7 @@ def stacks_list(**kwargs):
     headers = ['Stack name', 'Slug', 'Description']
     stacks = [
         (stack['name'], stack['slug'], stack.get('description'))
-        for stack in api.stacks_list(cnf['user'][stolos_url])
+        for stack in api.stacks_list(cnf['user'][_get_hostname(stolos_url)])
     ]
     click.echo(tabulate(stacks, headers=headers))
 
@@ -253,7 +264,7 @@ def projects_list(**kwargs):
     headers = ['UUID', 'Stack', 'Public URL']
     projects = [
         (p['uuid'], p['stack']['slug'], p['routing_config']['domain'])
-        for p in api.projects_list(cnf['user'][stolos_url])
+        for p in api.projects_list(cnf['user'][_get_hostname(stolos_url)])
     ]
     click.echo(tabulate(projects, headers=headers))
 
@@ -277,7 +288,7 @@ def create(**kwargs):
         fmt_str = '{company}-{stack_name}-{username}-{hex}.{server}'
         kwargs['public_url'] = fmt_str.format(
             company=company, stack_name=stack_name,
-            username=cnf['user'][stolos_url]['username'],
+            username=cnf['user'][_get_hostname(stolos_url)]['username'],
             hex=''.join(
                 [random.choice(string.ascii_lowercase) for _ in range(6)]),
             server=stolos_url,
@@ -285,7 +296,7 @@ def create(**kwargs):
         click.echo(
             'Assigning random public URL "{}"'.format(kwargs['public_url']))
     click.echo('Creating project "{}"...'.format(project_directory), nl=False)
-    project = api.projects_create(cnf['user'][stolos_url], **kwargs)
+    project = api.projects_create(cnf['user'][_get_hostname(stolos_url)], **kwargs)
     if not os.path.exists(project_directory):
         os.makedirs(project_directory)
     os.chdir(project_directory)
@@ -312,7 +323,7 @@ def connect(**kwargs):
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
     click.echo('Connecting to project "{}"...'.format(project_uuid), nl=False)
-    project = api.projects_retrieve(cnf['user'][stolos_url], project_uuid)
+    project = api.projects_retrieve(cnf['user'][_get_hostname(stolos_url)], project_uuid)
     _initialize_project(stolos_url, project)
     click.echo('\t\tOkay.')
     click.echo('Your project is ready! Run "stolos up" to launch it!')
@@ -337,7 +348,7 @@ def delete(**kwargs):
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
     click.echo('Deleting project "{}"...'.format(project_uuid), nl=False)
-    api.projects_remove(cnf['user'][stolos_url], project_uuid)
+    api.projects_remove(cnf['user'][_get_hostname(stolos_url)], project_uuid)
     click.echo('\t\tOkay.')
     if remove_directory:
         click.echo('Clearing up Docker resources...')
@@ -385,9 +396,9 @@ def upload(**kwargs):
 
     with open(expanded_public_key_path, 'r') as fin:
         project = api.keys_create(
-            cnf['user'][stolos_url], ssh_public_key=fin.read(), name=name)
+            cnf['user'][_get_hostname(stolos_url)], ssh_public_key=fin.read(), name=name)
 
-    updated_conf = cnf['user'][stolos_url]
+    updated_conf = cnf['user'][_get_hostname(stolos_url)]
     updated_conf['identity-file'] = os.path.abspath(
         re.sub('.pub$', '', expanded_public_key_path))
     config.update_user_config({
@@ -415,7 +426,7 @@ def keys_list(**kwargs):
     headers = ['UUID', 'Name', algorithm.upper()]
     keys = [
         (key['uuid'], key['name'], key[algorithm])
-        for key in api.keys_list(cnf['user'][stolos_url])
+        for key in api.keys_list(cnf['user'][_get_hostname(stolos_url)])
     ]
     click.echo(tabulate(keys, headers=headers))
 
@@ -433,7 +444,7 @@ def delete(**kwargs):
         stolos_url = cnf['user']['default-api-server']
     click.echo('Deleting SSH public key "{}"...'.format(public_key_uuid),
                nl=False)
-    api.keys_remove(cnf['user'][stolos_url], public_key_uuid)
+    api.keys_remove(cnf['user'][_get_hostname(stolos_url)], public_key_uuid)
     click.echo('\t\tOkay.')
 
 def _initialize_project(stolos_url, project):
