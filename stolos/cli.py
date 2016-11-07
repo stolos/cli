@@ -520,7 +520,7 @@ def _initialize_services():
     with open(compose_file_path, 'r') as fin:
         compose_file = yaml.load(fin)
     services = compose_file.get('services', {})
-    valid = re.compile(r'^([^=]*)=(.*)')
+    valid = re.compile(r'^([^=]+)=(.+)')
     for service, service_details in services.iteritems():
         if 'environment' not in service_details:
             continue
@@ -543,7 +543,7 @@ def _initialize_services():
         return
     click.secho('Initializing services', bold=True)
     for service, url in clone_urls.iteritems():
-        service_dir = url.split(' ')[-1]
+        service_dir = url.rstrip().split(' ')[-1]
         if os.path.exists(service_dir):
             results['success'].append(
                 'Service "{}" is already initialized.'.format(service)
@@ -564,7 +564,7 @@ def _initialize_services():
             continue
         try:
             init_process = subprocess.Popen(
-                [scm, 'clone'] + clone_url.split(' '),
+                [scm, 'clone'] + clone_url.strip().split(' '),
                 stdout=sys.stdout,
                 stderr=sys.stderr,
                 stdin=sys.stdin
@@ -573,13 +573,13 @@ def _initialize_services():
             if e.errno == 2:
                 results['failure'].append(
                     'Service "{}" initialization from "{}" failed.\nPlease install {} and attempt to manually initialize.'.format(
-                        service, clone_url.split(' ')[0], scm
+                        service, clone_url.strip().split(' ')[0], scm
                     )
                 )
             else:
                 results['failure'].append(
                     'Service "{}" initialization from "{}" failed with the following error:\n\t{}}'.format(
-                        service, clone_url.split(' ')[0], e
+                        service, clone_url.strip().split(' ')[0], e
                     )
                 )
             continue
@@ -590,7 +590,7 @@ def _initialize_services():
         else:
             results['failure'].append(
                 'Service "{}" initialization from "{}" failed.\nPlease attempt to manually initialize.'.format(
-                    service, clone_url.split(' ')[0]
+                    service, clone_url.strip().split(' ')[0]
                 )
             )
 
