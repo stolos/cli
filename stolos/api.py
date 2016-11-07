@@ -18,6 +18,12 @@ def _urljoin(*args):
     return '/'.join(map(lambda x: str(x).strip('/'), args)) + '/'
 
 
+def _ensure_protocol(url):
+    if not url.startswith('http'):
+        return 'https://{}'.format(stolos_url)
+    return url
+
+
 def handle_api_errors(func):
     """
     Decorator for handling API errors. Catches `requests.exceptions.HTTPError`
@@ -59,7 +65,8 @@ def authenticate(stolos_url, username, password):
     """
     url = _urljoin(stolos_url, 'api/a0.1/auth/login/')
     resp = requests.post(
-        url, json={'username': username, 'password': password})
+        _ensure_protocol(url), json={'username': username, 'password': password}
+    )
     resp.raise_for_status()
     return resp.json()
 
@@ -71,7 +78,7 @@ def change_password(credentials, current_password, new_password):
     """
     url = _urljoin(credentials['host'], 'api/a0.1/auth/password/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.post(url, headers=headers, json={
+    resp = requests.post(_ensure_protocol(url), headers=headers, json={
         'current_password': current_password,
         'new_password': new_password,
         're_new_password': new_password,
@@ -86,7 +93,7 @@ def stacks_list(credentials):
     """
     url = _urljoin(credentials['host'], 'api/a0.1/stacks/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(_ensure_protocol(url), headers=headers)
     resp.raise_for_status()
     return resp.json()
 
@@ -98,7 +105,7 @@ def projects_list(credentials):
     """
     url = _urljoin(credentials['host'], 'api/a0.1/projects/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(_ensure_protocol(url), headers=headers)
     resp.raise_for_status()
     return resp.json()
 
@@ -109,8 +116,9 @@ def projects_create(credentials, stack, public_url):
     Create a new project, using the given stack and public URL.
     """
     url = _urljoin(credentials['host'], 'api/a0.1/projects/')
+    click.echo(url)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.post(url, headers=headers, json={
+    resp = requests.post(_ensure_protocol(url), headers=headers, json={
         'set_stack': stack,
         'routing_config': {
             'domain': public_url,
@@ -130,7 +138,7 @@ def projects_retrieve(credentials, project_uuid):
     """
     url = _urljoin(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(_ensure_protocol(url), headers=headers)
     resp.raise_for_status()
     return resp.json()
 
@@ -142,7 +150,7 @@ def projects_remove(credentials, project_uuid):
     """
     url = _urljoin(credentials['host'], 'api/a0.1/projects/', project_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.delete(url, headers=headers)
+    resp = requests.delete(_ensure_protocol(url), headers=headers)
     try:
         resp.raise_for_status()
     except requests.exceptions.HTTPError as err:
@@ -155,9 +163,9 @@ def keys_create(credentials, ssh_public_key, name=None):
     """
     Create a new SSH public key.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/keys/')
+    url = _urljoin(credentials['host'], 'api/a0.1/keys/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.post(url, headers=headers, json={
+    resp = requests.post(_ensure_protocol(url), headers=headers, json={
         'public_key': ssh_public_key,
         'name': name,
     })
@@ -170,9 +178,9 @@ def keys_list(credentials):
     """
     List the SSH public keys of the currently logged in user.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/keys/')
+    url = _urljoin(credentials['host'], 'api/a0.1/keys/')
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(_ensure_protocol(url), headers=headers)
     resp.raise_for_status()
     return resp.json()
 
@@ -181,9 +189,9 @@ def keys_remove(credentials, public_key_uuid):
     """
     Remove the SSH public key with the given UUID.
     """
-    url = os.path.join(credentials['host'], 'api/a0.1/keys/', public_key_uuid)
+    url = _urljoin(credentials['host'], 'api/a0.1/keys/', public_key_uuid)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
-    resp = requests.delete(url, headers=headers)
+    resp = requests.delete(_ensure_protocol(url), headers=headers)
     try:
         resp.raise_for_status()
     except requests.exceptions.HTTPError as err:
