@@ -116,7 +116,6 @@ def projects_create(credentials, stack, public_url):
     Create a new project, using the given stack and public URL.
     """
     url = _urljoin(credentials['host'], 'api/a0.1/projects/')
-    click.echo(url)
     headers = {'Authorization': 'Token {}'.format(credentials['token'])}
     resp = requests.post(_ensure_protocol(url), headers=headers, json={
         'set_stack': stack,
