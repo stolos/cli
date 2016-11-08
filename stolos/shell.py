@@ -94,7 +94,7 @@ def usage_hint(command, shell):
     if shell == 'fish':
         return ('eval ({command})'.format(command=command), '#')
     elif shell == 'powershell':
-        return ('{command} | ForEach-Object {If (-Not[string]::IsNullOrEmpty($_)) { $_ | Invoke-Expression}}'.format(command=command), '#')
+        return ('{command} | ForEach-Object {{If (-Not[string]::IsNullOrEmpty($_)) {{ $_ | Invoke-Expression }}}}'.format(command=command), '#')
     elif shell == 'cmd':
         return ('\t@FOR /f "tokens=*" %i IN ({command}) DO @%i'.format(
             command=command), 'REM')
