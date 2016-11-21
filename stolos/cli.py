@@ -14,6 +14,7 @@ import yaml
 from urlparse import urlparse
 
 import click
+import yaml
 from tabulate import tabulate
 
 from stolos import api, config, exceptions, shell
@@ -302,6 +303,7 @@ def create(**kwargs):
     os.chdir(project_directory)
     _initialize_project(stolos_url, project)
     click.echo('\t\tOk.')
+    _initialize_services()
     if project_directory == '.':
         click.echo('Your project is ready! Run "stolos up" to launch it!')
         return
@@ -325,6 +327,7 @@ def connect(**kwargs):
     click.echo('Connecting to project "{}"...'.format(project_uuid), nl=False)
     project = api.projects_retrieve(cnf['user'][_get_hostname(stolos_url)], project_uuid)
     _initialize_project(stolos_url, project)
+    _initialize_services()
     click.echo('\t\tOkay.')
     click.echo('Your project is ready! Run "stolos up" to launch it!')
 
@@ -518,6 +521,97 @@ silent = true
                 STOLOS_SERVER=project['server']['host']
             )
         )
+
+
+def _initialize_services():
+    compose_file_path = os.path.join(os.getcwd(), 'docker-compose.yaml')
+    clone_urls = {}
+    if not os.path.exists(compose_file_path):
+        return
+    with open(compose_file_path, 'r') as fin:
+        compose_file = yaml.load(fin)
+    services = compose_file.get('services', {})
+    valid = re.compile(r'^([^=]+)=(.+)')
+    for service, service_details in services.iteritems():
+        if 'environment' not in service_details:
+            continue
+        environment = service_details['environment']
+        if type(environment) == list:
+            environment = {}
+            for var in service_details['environment']:
+                match = valid.match(var)
+                if match is None:
+                    continue
+                environment[match.group(1)] = match.group(2)
+        if 'STOLOS_REPO_URL' not in environment:
+            continue
+        clone_urls[service] = environment['STOLOS_REPO_URL']
+    results = {
+        'success': [],
+        'failure': [],
+    }
+    if len(clone_urls) == 0:
+        return
+    click.secho('Initializing services', bold=True)
+    for service, url in clone_urls.iteritems():
+        service_dir = url.rstrip().split(' ')[-1]
+        if os.path.exists(service_dir):
+            results['success'].append(
+                'Service "{}" is already initialized.'.format(service)
+            )
+            continue
+        if url.startswith('git+'):
+            scm = 'git'
+            clone_url = url[4:]
+        elif url.startswith('hg+'):
+            scm = 'hg'
+            clone_url = url[3:]
+        else:
+            results['failure'].append(
+                'Service "{}" initialization failed.\nPattern of repository url "{}" could not be resolved.'.format(
+                    service, url
+                )
+            )
+            continue
+        try:
+            init_process = subprocess.Popen(
+                [scm, 'clone'] + clone_url.strip().split(' '),
+                stdout=sys.stdout,
+                stderr=sys.stderr,
+                stdin=sys.stdin
+            )
+        except OSError as e:
+            if e.errno == 2:
+                results['failure'].append(
+                    'Service "{}" initialization from "{}" failed.\nPlease install {} and attempt to manually initialize.'.format(
+                        service, clone_url.strip().split(' ')[0], scm
+                    )
+                )
+            else:
+                results['failure'].append(
+                    'Service "{}" initialization from "{}" failed with the following error:\n\t{}}'.format(
+                        service, clone_url.strip().split(' ')[0], e
+                    )
+                )
+            continue
+        if init_process.wait() == 0:
+            results['success'].append(
+                'Service "{}" was successfully initialized.'.format(service)
+            )
+        else:
+            results['failure'].append(
+                'Service "{}" initialization from "{}" failed.\nPlease attempt to manually initialize.'.format(
+                    service, clone_url.strip().split(' ')[0]
+                )
+            )
+
+    # Inform about successful initializations
+    for success in results['success']:
+        click.echo(success)
+
+    # Inform about failed initializations
+    for failure in results['failure']:
+        click.secho(failure, bold=True)
 
 
 def _deinitialize_project():
