@@ -44,9 +44,12 @@ def login(ctx, **kwargs):
     stolos_url = api._ensure_protocol(kwargs['stolos_url'])
     host = _get_hostname(stolos_url)
     cnf = config.get_user_config()
-    identity_file = cnf['user'][host].get('identity-file')
+    identity_file = cnf.get('user', {}).get(host, {}).get('identity-file')
+    auth_response = api.authenticate(**kwargs)
     new_config = {
-        'token': api.authenticate(**kwargs)['auth_token'],
+        'token': auth_response['auth_token'],
+        'key-pem': auth_response['docker_key_pem'],
+        'cert-pem': auth_response['docker_cert_pem'],
         'username': kwargs['username'],
         'host': stolos_url
     }
@@ -470,13 +473,7 @@ def _initialize_project(stolos_url, project):
     })
     with open('.stolos/ca.pem', 'w+') as ca_pem:
         ca_pem.write(project['server']['docker_ca_pem'])
-        os.chmod('.stolos/ca.pem', 0600)
-    with open('.stolos/cert.pem', 'w+') as cert_pem:
-        cert_pem.write(project['server']['docker_cert_pem'])
-        os.chmod('.stolos/cert.pem', 0600)
-    with open('.stolos/key.pem', 'w+') as key_pem:
-        key_pem.write(project['server']['docker_key_pem'])
-        os.chmod('.stolos/key.pem', 0600)
+        os.chmod('.stolos/ca.pem', 0o600)
     with open('docker-compose.yaml', 'w+') as docker_compose:
         docker_compose.write(project['stack']['docker_compose_file'])
     with open('.stolos/default.prf', 'w+') as default_profile:
@@ -661,8 +658,16 @@ def _get_environ(cnf):
 def _config_environ(cnf):
     """
     Configures the environment with any needed environment variables for compose
-    and Unison.
+    and Unison. Also updates the docker certificates to the latest valid from
+    user config.
     """
+    cnf = config.get_config()
+    server = cnf['user']['default-api-server']
+    with open('.stolos/cert.pem', 'w+') as cert_pem:
+        cert_pem.write(cnf['user'][server].get('cert-pem', ''))
+        os.chmod('.stolos/cert.pem', 0o600)
+    with open('.stolos/key.pem', 'w+') as key_pem:
+        key_pem.write(cnf['user'][server].get('key-pem', ''))
     os.environ.update(_get_environ(cnf))
 
 
