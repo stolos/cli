@@ -17,10 +17,7 @@ import click
 import yaml
 from tabulate import tabulate
 
-from stolos import api, config, exceptions, shell
-
-
-VERSION = '0.2'
+from stolos import api, config, exceptions, shell, VERSION
 
 
 @click.group()

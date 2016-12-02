@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from stolos.cli import VERSION
+from stolos import VERSION
 
 
 setup(
