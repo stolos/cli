@@ -11,11 +11,11 @@ setup(
         'Click >= 6.0',
         'PyYAML >= 3.11',
         'tabulate >= 0.7.5',
-        'requests >= 2.6.1',
+        'requests >= 2.6.1, < 2.12',
     ],
     extras_require={
-        'security': ['requests[security] >= 2.6.1'],
-        'compose': ['requests >= 2.6.1', 'docker-compose >= 1.7.0'],
+        'security': ['requests[security] >= 2.6.1, < 2.12'],
+        'compose': ['docker-compose >= 1.7.0'],
     },
     entry_points='''
     [console_scripts]
