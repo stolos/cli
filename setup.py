@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
+from stolos.cli import VERSION
 
 
 setup(
     name='stolosctl',
-    version='0.1',
+    version=VERSION,
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
