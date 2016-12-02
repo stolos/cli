@@ -20,6 +20,9 @@ from tabulate import tabulate
 from stolos import api, config, exceptions, shell
 
 
+VERSION = '0.2'
+
+
 @click.group()
 def cli():
     pass
@@ -31,6 +34,11 @@ def _get_hostname(url):
     """
     url = api._ensure_protocol(url)
     return urlparse(url).hostname
+
+
+@cli.command(help='Print the version of the CLI')
+def version():
+    click.echo(VERSION)
 
 
 @cli.command(help='Log in to a Stolos environment')
