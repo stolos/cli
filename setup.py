@@ -15,7 +15,7 @@ setup(
     ],
     extras_require={
         'security': ['requests[security] >= 2.6.1'],
-        'compose': ['requests >= 2.6.1, < 2.8', 'docker-compose >= 1.7.0'],
+        'compose': ['requests >= 2.6.1', 'docker-compose >= 1.7.0'],
     },
     entry_points='''
     [console_scripts]
