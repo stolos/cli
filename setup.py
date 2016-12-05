@@ -5,6 +5,8 @@ from stolos import VERSION
 setup(
     name='stolosctl',
     version=VERSION,
+    author='SourceLair PC',
+    url='https://www.sourcelair.com/',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
