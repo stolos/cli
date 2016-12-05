@@ -93,3 +93,6 @@ ENV/
 
 # Virtualenv
 .venv
+
+# Drone
+secrets.yml
