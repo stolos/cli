@@ -6,7 +6,6 @@ build:
 
 cache:
   mount:
-    - dashboard/static/dashboard/node_modules
     - /drone/pip-cache
 
 publish:
@@ -16,10 +15,5 @@ publish:
     password: $$SOURCELAIR_PYPI_PASSWORD
     distributions:
       - sdist
-    when:
-      event: tag
-  github_release:
-    files: ./...
-    checksum: sha256
     when:
       event: tag
