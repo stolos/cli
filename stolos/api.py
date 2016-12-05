@@ -110,7 +110,7 @@ def projects_list(credentials):
 
 
 @handle_api_errors
-def projects_create(credentials, stack, public_url):
+def projects_create(credentials, stack, public_url, subdomains):
     """
     Create a new project, using the given stack and public URL.
     """
@@ -121,7 +121,7 @@ def projects_create(credentials, stack, public_url):
         'routing_config': {
             'domain': public_url,
             'config': {
-                'subdomains': False,
+                'subdomains': subdomains,
             },
         },
     })
