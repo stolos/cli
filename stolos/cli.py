@@ -190,15 +190,7 @@ def sync(repeat):
 def launch(**kwargs):
     _ensure_stolos_directory()
     cnf = config.get_config()
-    public_url = 'http://{}'.format(cnf['project']['public-url'])
-    service = kwargs.get('service')
-    port = kwargs.get('port')
-    if service:
-        subdomain, _, domain = public_url.partition('.')
-        if port:
-            public_url = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
-        else:
-            public_url = '{}-{}.{}'.format(subdomain, service, domain)
+    public_url = _get_url_for_service_port(cnf, **kwargs)
     click.echo('Opening {}...'.format(public_url))
     click.launch(public_url)
 
@@ -281,6 +273,8 @@ def projects_list(**kwargs):
 @projects.command(help='Create a new Stolos project')
 @click.option('--public-url',
               help='The public URL of your project, defaults to random hex')
+@click.option('--subdomains/--no-subdomains', default=False,
+              help='If this project should use subdomains for services, defaults to false')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
 @click.argument('stack')
@@ -468,6 +462,7 @@ def _initialize_project(stolos_url, project):
             'uuid': project['uuid'],
             'stack': project['stack']['slug'],
             'public-url': project['routing_config']['domain'],
+            'subdomains': project['routing_config']['config']['subdomains'],
         },
         'user': {
             'default-api-server': stolos_url,
@@ -647,16 +642,15 @@ def _get_environ(cnf):
         with open(compose_file_path, 'r') as fin:
             compose_file = yaml.load(fin)
         services = compose_file.get('services', {})
-        subdomain, _, domain = public_url.partition('.')
         for service, service_details in services.iteritems():
             if 'ports' not in service_details:
                 continue
             normalized_service = re.sub(r'[^a-zA-Z0-9_]', '_', service.upper())
             service_key = 'STOLOS_PUBLIC_URL_{}'.format(normalized_service)
-            env[service_key] = '{}-{}.{}'.format(subdomain, service, domain)
+            env[service_key] = _get_url_for_service_port(cnf, service)
             for port in service_details['ports']:
                 service_port_key = '{}_{}'.format(service_key, port)
-                env[service_port_key] = '{}-{}-{}.{}'.format(subdomain, service, port, domain)
+                env[service_port_key] = _get_url_for_service_port(cnf, service, port)
     return env
 
 
@@ -752,6 +746,22 @@ def _is_windows():
         'win32': True,
         'cygwin': True,
     }.get(sys.platform, False)
+
+
+def _get_url_for_service_port(cnf, service=None, port=None):
+    public_url = cnf['project']['public-url']
+    subdomain, _, domain = public_url.partition('.')
+    if service is None and port is None:
+        return 'http://{public_url}'.format(public_url=public_url)
+    token = service
+    if port is not None:
+        token = '{token}-{port}'.format(token=token, port=port,)
+    use_subdomains = cnf['project'].get('subdomains', False)
+    if use_subdomains:
+        return 'http://{token}.{public_url}'.format(token=token, public_url=public_url)
+    else:
+        return 'http://{subdomain}-{token}.{domain}'.format(
+            subdomain=subdomain, token=token, domain=domain)
 
 
 def _ensure_logged_in(stolos_url=None):
