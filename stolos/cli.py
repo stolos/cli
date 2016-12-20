@@ -191,8 +191,8 @@ def launch(**kwargs):
     _ensure_stolos_directory()
     cnf = config.get_config()
     public_url = _get_url_for_service_port(cnf, **kwargs)
-    click.echo('Opening {}...'.format(public_url))
-    click.launch(public_url)
+    click.echo('Opening http://{}...'.format(public_url))
+    click.launch('http://{}'.format(public_url))
 
 
 @cli.command(help='Get information about your current project')
@@ -752,15 +752,15 @@ def _get_url_for_service_port(cnf, service=None, port=None):
     public_url = cnf['project']['public-url']
     subdomain, _, domain = public_url.partition('.')
     if service is None and port is None:
-        return 'http://{public_url}'.format(public_url=public_url)
+        return '{public_url}'.format(public_url=public_url)
     token = service
     if port is not None:
         token = '{token}-{port}'.format(token=token, port=port,)
     use_subdomains = cnf['project'].get('subdomains', False)
     if use_subdomains:
-        return 'http://{token}.{public_url}'.format(token=token, public_url=public_url)
+        return '{token}.{public_url}'.format(token=token, public_url=public_url)
     else:
-        return 'http://{subdomain}-{token}.{domain}'.format(
+        return '{subdomain}-{token}.{domain}'.format(
             subdomain=subdomain, token=token, domain=domain)
 
 
