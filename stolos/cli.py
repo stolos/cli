@@ -202,11 +202,13 @@ def info(**kwargs):
     stolos_url = cnf['user']['default-api-server']
     _ensure_logged_in(stolos_url)
     headers = ['UUID', 'Stack', 'Public URL']
-    projects = [
-        (p['uuid'], p['stack']['slug'], p['routing_config']['domain'])
-        for p in [api.projects_retrieve(
-            cnf['user'][_get_hostname(stolos_url)], cnf['project']['uuid'])]
-    ]
+    project = api.projects_retrieve(cnf['user'][_get_hostname(stolos_url)], cnf['project']['uuid'])
+    uuid = project['uuid']
+    stack = '-'
+    if project['stack']:
+        stack = project['stack']['slug']
+    domain = project['routing_config']['domain']
+    projects = [(uuid, stack, domain)]
     click.echo(tabulate(projects, headers=headers))
 
 
@@ -263,10 +265,14 @@ def projects_list(**kwargs):
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
     headers = ['UUID', 'Stack', 'Public URL']
-    projects = [
-        (p['uuid'], p['stack']['slug'], p['routing_config']['domain'])
-        for p in api.projects_list(cnf['user'][_get_hostname(stolos_url)])
-    ]
+    projects = []
+    for project in api.projects_list(cnf['user'][_get_hostname(stolos_url)]):
+        uuid = project['uuid']
+        stack = '-'
+        if project['stack']:
+            stack = project['stack']['slug']
+        domain = project['routing_config']['domain']
+        projects.append((uuid, stack, domain, ))
     click.echo(tabulate(projects, headers=headers))
 
 
@@ -277,7 +283,8 @@ def projects_list(**kwargs):
               help='If this project should use subdomains for services, defaults to false')
 @click.option('--stolos-url',
               help='The URL of the Stolos server to use, if not the default')
-@click.argument('stack')
+@click.option('--stack',
+              help='The stack to use for this project, defaults to no stack')
 @click.argument('project_directory')
 def create(**kwargs):
     _ensure_logged_in(kwargs['stolos_url'])
@@ -287,15 +294,23 @@ def create(**kwargs):
     if not stolos_url:
         stolos_url = cnf['user']['default-api-server']
     if not kwargs['public_url']:
-        company, stack_name = kwargs['stack'].split('/')
-        fmt_str = '{company}-{stack_name}-{username}-{hex}.{server}'
-        kwargs['public_url'] = fmt_str.format(
-            company=company, stack_name=stack_name,
-            username=cnf['user'][_get_hostname(stolos_url)]['username'],
-            hex=''.join(
-                [random.choice(string.ascii_lowercase) for _ in range(6)]),
-            server=stolos_url,
-        )
+        if kwargs['stack']:
+            company, stack_name = kwargs['stack'].split('/')
+            fmt_str = '{company}-{stack_name}-{username}-{hex}.{server}'
+            kwargs['public_url'] = fmt_str.format(
+                company=company, stack_name=stack_name,
+                username=cnf['user'][_get_hostname(stolos_url)]['username'],
+                hex=''.join(
+                    [random.choice(string.ascii_lowercase) for _ in range(6)]),
+                server=stolos_url,
+            )
+        else:
+            fmt_str = '{username}-{hex}.{server}'
+            kwargs['public_url'] = fmt_str.format(
+                username=cnf['user'][_get_hostname(stolos_url)]['username'],
+                hex=''.join([random.choice(string.ascii_lowercase) for _ in range(6)]),
+                server=stolos_url,
+            )
         click.echo(
             'Assigning random public URL "{}"'.format(kwargs['public_url']))
     click.echo('Creating project "{}"...'.format(project_directory), nl=False)
@@ -460,7 +475,7 @@ def _initialize_project(stolos_url, project):
     config.update_project_config({
         'project': {
             'uuid': project['uuid'],
-            'stack': project['stack']['slug'],
+            'stack': project['stack']['slug'] if project['stack'] else None,
             'public-url': project['routing_config']['domain'],
             'subdomains': project['routing_config']['config']['subdomains'],
         },
@@ -474,8 +489,9 @@ def _initialize_project(stolos_url, project):
     with open('.stolos/ca.pem', 'w+') as ca_pem:
         ca_pem.write(project['server']['docker_ca_pem'])
         os.chmod('.stolos/ca.pem', 0o600)
-    with open('docker-compose.yaml', 'w+') as docker_compose:
-        docker_compose.write(project['stack']['docker_compose_file'])
+    if project['stack']:
+        with open('docker-compose.yaml', 'w+') as docker_compose:
+            docker_compose.write(project['stack']['docker_compose_file'])
     with open('.stolos/default.prf', 'w+') as default_profile:
         default_profile.write(
             """
@@ -522,6 +538,8 @@ silent = true
 
 def _initialize_services():
     compose_file_path = os.path.join(os.getcwd(), 'docker-compose.yaml')
+    if not os.path.exists(compose_file_path):
+        return
     clone_urls = {}
     if not os.path.exists(compose_file_path):
         return
@@ -627,8 +645,6 @@ def _get_environ(cnf):
     public_url = cnf['project']['public-url']
     env = {
         'STOLOS_PUBLIC_URL': public_url,
-        'STOLOS_STACK_SLUG': cnf['project']['stack'],
-        'STOLOS_STACK_NAME': os.path.basename(cnf['project']['stack']),
         'STOLOS_UUID': cnf['project']['uuid'],
         'COMPOSE_PROJECT_NAME': cnf['project']['uuid'],
         'COMPOSE_FILE': compose_file_path,
@@ -638,6 +654,9 @@ def _get_environ(cnf):
         'STOLOS_REMOTE_DIR': '/mnt/stolos/{}/'.format(cnf['project']['uuid']),
         'UNISON': os.path.join(os.getcwd(), '.stolos'),
     }
+    if cnf['project']['stack']:
+        env['STOLOS_STACK_SLUG'] = cnf['project']['stack']
+        env['STOLOS_STACK_NAME'] = os.path.basename(cnf['project']['stack'])
     if os.path.exists(compose_file_path):
         with open(compose_file_path, 'r') as fin:
             compose_file = yaml.load(fin)
@@ -685,7 +704,7 @@ def _compose(args):
 
 def _sync(repeat):
     """
-    Starts a proejct sync using Unison. Takes an extra parameter, which makes
+    Starts a project sync using Unison. Takes an extra parameter, which makes
     the synchronization repeat using Unison `-repeat` or not.
     """
     cnf = config.get_config()
