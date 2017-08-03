@@ -641,7 +641,14 @@ def _get_environ(cnf):
     """
     Gets the needed environment for Stolos.
     """
-    compose_file_path = os.path.join(os.getcwd(), 'docker-compose.yaml')
+    for filename in [
+        '.stolos.yml',
+        'docker-compose.yaml',
+        'docker-compose.yml',
+    ]:
+        compose_file_path = os.path.join(os.getcwd(), filename)
+        if os.path.isfile(compose_file_path):
+            break
     public_url = cnf['project']['public-url']
     env = {
         'STOLOS_PUBLIC_URL': public_url,
