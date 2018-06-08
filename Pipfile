@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"stolosctl" = {path = ".", editable = true}
+six = "*"
+click = ">=6.0"
+pyyaml = ">=3.11"
+tabulate = ">=0.7.5"
+requests = "*"
+
+[dev-packages]
+pylint = "*"
+black = "==18.6b1"
+
+[requires]
+python_version = "3.6"
