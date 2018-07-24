@@ -25,4 +25,12 @@ setup(
     stolos=stolos.cli:cli
     stolosctl=stolos.cli:cli
     """,
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+    ],
 )
