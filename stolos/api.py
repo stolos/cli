@@ -177,8 +177,17 @@ def keys_create(credentials, ssh_public_key, name=None):
         headers=headers,
         json={"public_key": ssh_public_key, "name": name},
     )
-    resp.raise_for_status()
-    return resp.json()
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as exc:
+        if exc.response.status_code != 409:
+            raise
+        click.echo(
+            click.style("[WARNING] ", bold=True)
+            + "Public key already exists, did nothing."
+        )
+
+    return resp
 
 
 @handle_api_errors

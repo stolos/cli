@@ -13,9 +13,9 @@ import time
 import click
 import yaml
 from six import iteritems
+from six.moves.urllib.parse import urlparse
 from tabulate import tabulate
 
-from six.moves import urlparse
 from stolos import VERSION, api, config, exceptions, shell
 
 
@@ -465,7 +465,7 @@ def upload(**kwargs):
         name = platform.node()
 
     with open(expanded_public_key_path, "r") as fin:
-        api.keys_create(
+        resp = api.keys_create(
             cnf["user"][_get_hostname(stolos_url)], ssh_public_key=fin.read(), name=name
         )
 
@@ -474,7 +474,8 @@ def upload(**kwargs):
         re.sub(".pub$", "", expanded_public_key_path)
     )
     config.update_user_config({"user": {stolos_url: updated_conf}})
-    click.echo("Public key {} uploaded successfully".format(public_key_path))
+    if resp.ok:
+        click.echo("Public key {} uploaded successfully".format(public_key_path))
 
 
 @keys.command(name="list", help="List your SSH public keys")
